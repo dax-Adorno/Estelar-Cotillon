@@ -1,0 +1,37 @@
+﻿# Entornos y secretos
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# Django
+db.sqlite3
+media/
+staticfiles/
+
+# Frontend
+node_modules/
+dist/
+build/
+.pnpm-store/
+
+# Logs
+*.log
+
+# Docker
+docker-data/
+
+# IDE / Sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
