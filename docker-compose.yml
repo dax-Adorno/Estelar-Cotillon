@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: estelart_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: estelart_db
+      POSTGRES_USER: estelart_user
+      POSTGRES_PASSWORD: estelart_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - estelart_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U estelart_user -d estelart_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  django_api:
+    build:
+      context: ./server_django
+      dockerfile: Dockerfile
+    container_name: estelart_django_api
+    restart: unless-stopped
+    environment:
+      DJANGO_SECRET_KEY: dev-docker-secret-key
+      DJANGO_DEBUG: "True"
+      DJANGO_ALLOWED_HOSTS: 127.0.0.1,localhost,0.0.0.0,django_api
+      DATABASE_ENGINE: postgres
+      POSTGRES_DB: estelart_db
+      POSTGRES_USER: estelart_user
+      POSTGRES_PASSWORD: estelart_password
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./server_django:/app
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  estelart_postgres_data:
