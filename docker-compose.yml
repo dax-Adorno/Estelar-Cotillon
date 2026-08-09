@@ -41,5 +41,19 @@ services:
       db:
         condition: service_healthy
 
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: estelart_client
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    depends_on:
+      - django_api
+
 volumes:
   estelart_postgres_data:
