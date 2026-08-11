@@ -1,0 +1,11 @@
+#!/bin/sh
+
+powershell.exe -ExecutionPolicy Bypass -File "./scripts/check-local.ps1"
+
+if [ $? -ne 0 ]; then
+  echo "Pre-push checks failed. Push cancelled."
+  exit 1
+fi
+
+echo "Pre-push checks passed."
+exit 0
