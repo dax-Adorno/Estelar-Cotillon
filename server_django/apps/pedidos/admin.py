@@ -1,0 +1,1 @@
+"""Configuracion administrativa de pedidos."""
