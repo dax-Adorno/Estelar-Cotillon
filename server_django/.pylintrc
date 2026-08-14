@@ -11,7 +11,8 @@ disable=
     too-few-public-methods,
     import-error,
     unused-argument,
-    line-too-long
+    line-too-long,
+    duplicate-code
 
 [FORMAT]
 max-line-length=88
