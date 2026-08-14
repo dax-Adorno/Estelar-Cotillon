@@ -1,5 +1,6 @@
 """Tests para modelos de productos."""
 
+# pylint: disable=duplicate-code
 from decimal import Decimal
 
 import pytest
