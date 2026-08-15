@@ -27,6 +27,7 @@ services:
       DJANGO_SECRET_KEY: dev-docker-secret-key
       DJANGO_DEBUG: "True"
       DJANGO_ALLOWED_HOSTS: 127.0.0.1,localhost,0.0.0.0,django_api
+      CORS_ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
       DATABASE_ENGINE: postgres
       POSTGRES_DB: estelart_db
       POSTGRES_USER: estelart_user
