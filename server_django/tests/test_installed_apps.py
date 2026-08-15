@@ -7,3 +7,4 @@ def test_apps_del_dominio_estan_registradas() -> None:
     assert "apps.productos" in nombres_apps
     assert "apps.clientes" in nombres_apps
     assert "apps.pedidos" in nombres_apps
+    assert "apps.promociones" in nombres_apps
