@@ -12,10 +12,16 @@ class ImagenProductoInline(admin.TabularInline):
     extra = 1
     fields = (
         "imagen",
+        "imagen_web",
+        "imagen_thumbnail",
         "texto_alt",
         "principal",
         "orden",
         "activa",
+    )
+    readonly_fields = (
+        "imagen_web",
+        "imagen_thumbnail",
     )
 
 
