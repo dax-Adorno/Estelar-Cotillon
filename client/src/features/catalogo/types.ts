@@ -6,6 +6,15 @@ export interface Categoria {
   activa: boolean;
 }
 
+export interface ImagenProducto {
+  id: number;
+  imagen_url: string;
+  thumbnail_url: string;
+  texto_alt: string;
+  principal: boolean;
+  orden: number;
+}
+
 export interface Producto {
   id: number;
   categoria: number;
@@ -20,6 +29,9 @@ export interface Producto {
   stock: number;
   activo: boolean;
   destacado: boolean;
+  imagen_principal: string | null;
+  thumbnail_principal: string | null;
+  imagenes: ImagenProducto[];
 }
 
 export interface Promocion {
