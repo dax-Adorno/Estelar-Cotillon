@@ -1,6 +1,13 @@
-"""Modelos de productos y categorias."""
+"""Modelos de productos."""
+
+from typing import Any
+from uuid import uuid4
 
 from django.db import models
+from django.utils.text import slugify
+
+from apps.productos.image_processing import procesar_imagen_producto
+from apps.productos.validators import validar_imagen_producto
 
 
 class Categoria(models.Model):
@@ -73,7 +80,18 @@ class ImagenProducto(models.Model):
         on_delete=models.CASCADE,
         related_name="imagenes",
     )
-    imagen = models.ImageField(upload_to="productos/originales/")
+    imagen = models.ImageField(
+        upload_to="productos/originales/",
+        validators=[validar_imagen_producto],
+    )
+    imagen_web = models.ImageField(
+        upload_to="productos/web/",
+        blank=True,
+    )
+    imagen_thumbnail = models.ImageField(
+        upload_to="productos/thumbnails/",
+        blank=True,
+    )
     texto_alt = models.CharField(max_length=180, blank=True)
     principal = models.BooleanField(default=False)
     orden = models.PositiveIntegerField(default=0)
@@ -94,3 +112,57 @@ class ImagenProducto(models.Model):
 
     def __str__(self) -> str:
         return f"{self.producto.sku} - imagen {self.id}"
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Procesa la imagen original antes de guardar."""
+        if self._debe_procesar_imagen():
+            nombre_base = self._generar_nombre_base()
+            imagen_web, imagen_thumbnail = procesar_imagen_producto(
+                self.imagen,
+                nombre_base,
+            )
+
+            nombre_web = imagen_web.name or f"{nombre_base}-web.webp"
+            nombre_thumbnail = imagen_thumbnail.name or f"{nombre_base}-thumb.webp"
+
+            self.imagen_web.save(
+                nombre_web,
+                imagen_web,
+                save=False,
+            )
+            self.imagen_thumbnail.save(
+                nombre_thumbnail,
+                imagen_thumbnail,
+                save=False,
+            )
+
+        super().save(*args, **kwargs)
+
+    def _debe_procesar_imagen(self) -> bool:
+        """Indica si deben generarse versiones optimizadas."""
+        if not self.imagen:
+            return False
+
+        if self.pk is None:
+            return True
+
+        if not self.imagen_web or not self.imagen_thumbnail:
+            return True
+
+        imagen_guardada = (
+            ImagenProducto.objects.filter(pk=self.pk).only("imagen").first()
+        )
+
+        if imagen_guardada is None:
+            return True
+
+        return imagen_guardada.imagen.name != self.imagen.name
+
+    def _generar_nombre_base(self) -> str:
+        """Genera un nombre seguro para archivos derivados."""
+        base = slugify(self.producto.sku or self.producto.nombre)
+
+        if not base:
+            base = "producto"
+
+        return f"{base}-{uuid4().hex[:12]}"
