@@ -174,4 +174,24 @@ describe("App", () => {
 
     expect(screen.queryByText("Limpiapipas metalizados")).not.toBeInTheDocument();
   });
+
+  it("deberia buscar productos por texto", async () => {
+    render(<App />);
+
+    expect(
+      await screen.findByText("Limpiapipas surtidos 30 cm"),
+    ).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Buscar producto"), {
+      target: { value: "SLI-001" },
+    });
+
+    expect(screen.getByText("Kit slime colores pastel")).toBeInTheDocument();
+
+    expect(
+      screen.queryByText("Limpiapipas surtidos 30 cm"),
+    ).not.toBeInTheDocument();
+
+    expect(screen.queryByText("Limpiapipas metalizados")).not.toBeInTheDocument();
+  });
 });

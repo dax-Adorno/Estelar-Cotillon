@@ -13,12 +13,17 @@ import type {
   Promocion,
 } from "./features/catalogo/types";
 
+function normalizarTexto(valor: string): string {
+  return valor.trim().toLowerCase();
+}
+
 function App() {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [productos, setProductos] = useState<Producto[]>([]);
   const [promociones, setPromociones] = useState<Promocion[]>([]);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("todas");
   const [soloDestacados, setSoloDestacados] = useState(false);
+  const [terminoBusqueda, setTerminoBusqueda] = useState("");
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,6 +51,8 @@ function App() {
   }, []);
 
   const productosFiltrados = useMemo(() => {
+    const busqueda = normalizarTexto(terminoBusqueda);
+
     return productos.filter((producto) => {
       const coincideCategoria =
         categoriaSeleccionada === "todas" ||
@@ -53,9 +60,21 @@ function App() {
 
       const coincideDestacado = !soloDestacados || producto.destacado;
 
-      return coincideCategoria && coincideDestacado;
+      const textoProducto = normalizarTexto(
+        [
+          producto.nombre,
+          producto.sku,
+          producto.descripcion,
+          producto.categoria_nombre,
+        ].join(" "),
+      );
+
+      const coincideBusqueda =
+        busqueda.length === 0 || textoProducto.includes(busqueda);
+
+      return coincideCategoria && coincideDestacado && coincideBusqueda;
     });
-  }, [categoriaSeleccionada, productos, soloDestacados]);
+  }, [categoriaSeleccionada, productos, soloDestacados, terminoBusqueda]);
 
   const promocionesVigentes = useMemo(() => {
     return promociones.filter(
@@ -127,7 +146,9 @@ function App() {
               categorias={categorias}
               onCategoriaChange={setCategoriaSeleccionada}
               onSoloDestacadosChange={setSoloDestacados}
+              onTerminoBusquedaChange={setTerminoBusqueda}
               soloDestacados={soloDestacados}
+              terminoBusqueda={terminoBusqueda}
             />
 
             <section className="mt-10" id="catalogo">
