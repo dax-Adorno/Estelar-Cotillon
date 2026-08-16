@@ -2,7 +2,21 @@
 
 from django.contrib import admin
 
-from apps.productos.models import Categoria, Producto
+from apps.productos.models import Categoria, ImagenProducto, Producto
+
+
+class ImagenProductoInline(admin.TabularInline):
+    """Imagenes asociadas a un producto."""
+
+    model = ImagenProducto
+    extra = 1
+    fields = (
+        "imagen",
+        "texto_alt",
+        "principal",
+        "orden",
+        "activa",
+    )
 
 
 @admin.register(Categoria)
@@ -13,7 +27,6 @@ class CategoriaAdmin(admin.ModelAdmin):
         "nombre",
         "slug",
         "activa",
-        "creada_en",
     )
     list_filter = ("activa",)
     search_fields = (
@@ -48,3 +61,25 @@ class ProductoAdmin(admin.ModelAdmin):
         "slug",
     )
     prepopulated_fields = {"slug": ("nombre",)}
+    inlines = [ImagenProductoInline]
+
+
+@admin.register(ImagenProducto)
+class ImagenProductoAdmin(admin.ModelAdmin):
+    """Administracion de imagenes de producto."""
+
+    list_display = (
+        "producto",
+        "principal",
+        "orden",
+        "activa",
+    )
+    list_filter = (
+        "principal",
+        "activa",
+    )
+    search_fields = (
+        "producto__sku",
+        "producto__nombre",
+        "texto_alt",
+    )

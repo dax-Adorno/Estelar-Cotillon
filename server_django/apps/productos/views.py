@@ -15,7 +15,11 @@ class CategoriaViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class ProductoViewSet(viewsets.ReadOnlyModelViewSet):
-    """API de lectura para productos activos."""
+    """API de solo lectura para productos activos."""
 
     serializer_class = ProductoSerializer
-    queryset = Producto.objects.filter(activo=True).select_related("categoria")
+    queryset = (
+        Producto.objects.filter(activo=True)
+        .select_related("categoria")
+        .prefetch_related("imagenes")
+    )

@@ -18,6 +18,9 @@ db.sqlite3
 media/
 staticfiles/
 
+#media
+server_django/media/
+
 # Frontend
 node_modules/
 dist/
