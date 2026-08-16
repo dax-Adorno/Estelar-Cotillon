@@ -65,6 +65,7 @@ CORS_ALLOWED_ORIGINS: list[str] = config(
     default="http://localhost:5173,http://127.0.0.1:5173",
     cast=Csv(),
 )
+
 ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
