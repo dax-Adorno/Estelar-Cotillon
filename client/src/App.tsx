@@ -1,27 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   obtenerCategorias,
   obtenerProductos,
   obtenerPromociones,
 } from "./features/catalogo/catalogoApi";
+import { CatalogFilters } from "./features/catalogo/components/CatalogFilters";
+import { ProductCard } from "./features/catalogo/components/ProductCard";
 import type {
   Categoria,
   Producto,
   Promocion,
 } from "./features/catalogo/types";
 
-function formatearPrecio(valor: string): string {
-  return Number(valor).toLocaleString("es-AR", {
-    style: "currency",
-    currency: "ARS",
-  });
-}
-
 function App() {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [productos, setProductos] = useState<Producto[]>([]);
   const [promociones, setPromociones] = useState<Promocion[]>([]);
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("todas");
+  const [soloDestacados, setSoloDestacados] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,42 +45,44 @@ function App() {
     void cargarCatalogo();
   }, []);
 
+  const productosFiltrados = useMemo(() => {
+    return productos.filter((producto) => {
+      const coincideCategoria =
+        categoriaSeleccionada === "todas" ||
+        producto.categoria === Number(categoriaSeleccionada);
+
+      const coincideDestacado = !soloDestacados || producto.destacado;
+
+      return coincideCategoria && coincideDestacado;
+    });
+  }, [categoriaSeleccionada, productos, soloDestacados]);
+
+  const promocionesVigentes = useMemo(() => {
+    return promociones.filter(
+      (promocion) => promocion.activa && promocion.vigente,
+    );
+  }, [promociones]);
+
   return (
     <main className="min-h-screen bg-orange-50 px-6 py-10 text-slate-900">
       <section className="mx-auto max-w-6xl">
-        <div className="mb-10 rounded-3xl bg-white p-8 shadow-sm ring-1 ring-orange-100">
+        <header className="mb-10 rounded-3xl bg-white p-8 shadow-sm ring-1 ring-orange-100">
           <span className="mb-4 inline-flex rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-700">
             ESTELART Platform
           </span>
 
           <h1 className="max-w-4xl text-4xl font-bold tracking-tight text-slate-950 md:text-6xl">
-            Plataforma comercial para cotillón, insumos creativos y clientes
+            Catálogo inteligente para cotillón, insumos creativos y clientes
             mayoristas.
           </h1>
 
           <p className="mt-6 max-w-3xl text-lg text-slate-600">
-            Catálogo personalizado, pedidos, promociones, métricas, reportes y
-            futura integración con asistente IA.
+            Productos, categorías, precios mayoristas, promociones y stock en una
+            misma plataforma comercial.
           </p>
+        </header>
 
-          <div className="mt-8 flex flex-wrap gap-4">
-            <a
-              className="rounded-xl bg-orange-600 px-5 py-3 font-semibold text-white transition hover:bg-orange-700"
-              href="#catalogo"
-            >
-              Ver catálogo
-            </a>
-
-            <a
-              className="rounded-xl border border-orange-300 px-5 py-3 font-semibold text-orange-700 transition hover:bg-orange-100"
-              href="#mayoristas"
-            >
-              Acceso mayoristas
-            </a>
-          </div>
-        </div>
-
-        <section className="grid gap-4 md:grid-cols-3">
+        <section className="grid gap-4 md:grid-cols-4">
           <article className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-orange-100">
             <p className="text-sm font-semibold text-slate-500">Categorías</p>
             <p className="mt-2 text-4xl font-bold">{categorias.length}</p>
@@ -95,8 +94,17 @@ function App() {
           </article>
 
           <article className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-orange-100">
+            <p className="text-sm font-semibold text-slate-500">Filtrados</p>
+            <p className="mt-2 text-4xl font-bold">
+              {productosFiltrados.length}
+            </p>
+          </article>
+
+          <article className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-orange-100">
             <p className="text-sm font-semibold text-slate-500">Promociones</p>
-            <p className="mt-2 text-4xl font-bold">{promociones.length}</p>
+            <p className="mt-2 text-4xl font-bold">
+              {promocionesVigentes.length}
+            </p>
           </article>
         </section>
 
@@ -113,60 +121,63 @@ function App() {
         )}
 
         {!cargando && !error && (
-          <section id="catalogo" className="mt-10">
-            <h2 className="text-2xl font-bold">Catálogo destacado</h2>
+          <>
+            <CatalogFilters
+              categoriaSeleccionada={categoriaSeleccionada}
+              categorias={categorias}
+              onCategoriaChange={setCategoriaSeleccionada}
+              onSoloDestacadosChange={setSoloDestacados}
+              soloDestacados={soloDestacados}
+            />
 
-            {productos.length === 0 ? (
-              <p className="mt-4 rounded-xl bg-white p-4 text-slate-600">
-                Todavía no hay productos cargados en la API.
-              </p>
-            ) : (
-              <div className="mt-6 grid gap-4 md:grid-cols-3">
-                {productos.slice(0, 6).map((producto) => (
-                  <article
-                    className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-orange-100"
-                    key={producto.id}
-                  >
-                    <p className="text-sm font-semibold text-orange-700">
-                      {producto.categoria_nombre}
-                    </p>
-                    <h3 className="mt-2 text-xl font-bold">
-                      {producto.nombre}
-                    </h3>
-                    <p className="mt-2 text-sm text-slate-500">
-                      SKU: {producto.sku}
-                    </p>
-                    <p className="mt-4 text-lg font-bold">
-                      {formatearPrecio(producto.precio_minorista)}
-                    </p>
-                  </article>
-                ))}
-              </div>
+            <section className="mt-10" id="catalogo">
+              <h2 className="text-2xl font-bold">Catálogo comercial</h2>
+
+              {productosFiltrados.length === 0 ? (
+                <p className="mt-6 rounded-xl bg-white p-4 text-slate-600">
+                  No hay productos para los filtros seleccionados.
+                </p>
+              ) : (
+                <div className="mt-6 grid gap-4 md:grid-cols-3">
+                  {productosFiltrados.map((producto) => (
+                    <ProductCard key={producto.id} producto={producto} />
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {promocionesVigentes.length > 0 && (
+              <section className="mt-10" id="promociones">
+                <h2 className="text-2xl font-bold">Promociones activas</h2>
+
+                <div className="mt-6 grid gap-4 md:grid-cols-3">
+                  {promocionesVigentes.map((promocion) => (
+                    <article
+                      className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-orange-100"
+                      key={promocion.id}
+                    >
+                      <p className="text-sm font-semibold text-orange-700">
+                        {promocion.tipo_promocion}
+                      </p>
+
+                      <h3 className="mt-2 text-xl font-bold">
+                        {promocion.nombre}
+                      </h3>
+
+                      <p className="mt-2 text-sm text-slate-600">
+                        {promocion.descripcion ||
+                          "Promoción vigente para el canal comercial seleccionado."}
+                      </p>
+
+                      <p className="mt-4 text-sm font-semibold text-emerald-700">
+                        Vigente
+                      </p>
+                    </article>
+                  ))}
+                </div>
+              </section>
             )}
-          </section>
-        )}
-
-        {!cargando && !error && promociones.length > 0 && (
-          <section className="mt-10">
-            <h2 className="text-2xl font-bold">Promociones activas</h2>
-
-            <div className="mt-6 grid gap-4 md:grid-cols-3">
-              {promociones.slice(0, 3).map((promocion) => (
-                <article
-                  className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-orange-100"
-                  key={promocion.id}
-                >
-                  <p className="text-sm font-semibold text-orange-700">
-                    {promocion.tipo_promocion}
-                  </p>
-                  <h3 className="mt-2 text-xl font-bold">{promocion.nombre}</h3>
-                  <p className="mt-2 text-sm text-slate-600">
-                    {promocion.vigente ? "Vigente" : "No vigente"}
-                  </p>
-                </article>
-              ))}
-            </div>
-          </section>
+          </>
         )}
       </section>
     </main>
