@@ -1,12 +1,14 @@
 import { useState } from "react";
 
 import type { CarritoItem } from "../../carrito/types";
-import type { DatosPedidoCliente, PedidoPreparado } from "../types";
+import type { DatosPedidoCliente, PedidoPublicoResponse } from "../types";
 
 interface CheckoutPedidoProps {
   items: CarritoItem[];
-  pedidoPreparado: PedidoPreparado | null;
-  onPrepararPedido: (datos: DatosPedidoCliente) => void;
+  pedidoCreado: PedidoPublicoResponse | null;
+  errorPedido: string | null;
+  enviandoPedido: boolean;
+  onEnviarPedido: (datos: DatosPedidoCliente) => Promise<void>;
 }
 
 function formatearPrecio(valor: number): string {
@@ -30,8 +32,10 @@ function calcularSubtotal(items: CarritoItem[]): number {
 
 export function CheckoutPedido({
   items,
-  pedidoPreparado,
-  onPrepararPedido,
+  pedidoCreado,
+  errorPedido,
+  enviandoPedido,
+  onEnviarPedido,
 }: CheckoutPedidoProps) {
   const [nombreCompleto, setNombreCompleto] = useState("");
   const [email, setEmail] = useState("");
@@ -44,25 +48,25 @@ export function CheckoutPedido({
   return (
     <section className="mt-10 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-orange-100">
       <div>
-        <h2 className="text-2xl font-bold text-slate-950">
-          Preparar pedido
-        </h2>
+        <h2 className="text-2xl font-bold text-slate-950">Crear pedido</h2>
         <p className="mt-2 text-slate-600">
-          Completá los datos del cliente para preparar la solicitud comercial.
+          Completá los datos del cliente para enviar el pedido real al sistema.
         </p>
       </div>
 
-      {carritoVacio ? (
+      {carritoVacio && !pedidoCreado ? (
         <p className="mt-6 rounded-xl bg-orange-50 p-4 text-slate-600">
-          Agregá productos al carrito antes de preparar un pedido.
+          Agregá productos al carrito antes de crear un pedido.
         </p>
-      ) : (
+      ) : null}
+
+      {!carritoVacio && (
         <form
           className="mt-6 grid gap-4"
           onSubmit={(event) => {
             event.preventDefault();
 
-            onPrepararPedido({
+            void onEnviarPedido({
               nombreCompleto,
               email,
               whatsapp,
@@ -144,23 +148,32 @@ export function CheckoutPedido({
             </p>
 
             <button
-              className="rounded-xl bg-orange-600 px-5 py-3 font-semibold text-white transition hover:bg-orange-700"
+              className="rounded-xl bg-orange-600 px-5 py-3 font-semibold text-white transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={enviandoPedido}
               type="submit"
             >
-              Preparar pedido
+              {enviandoPedido ? "Enviando pedido..." : "Crear pedido"}
             </button>
           </div>
         </form>
       )}
 
-      {pedidoPreparado && (
+      {errorPedido && (
+        <div className="mt-6 rounded-xl bg-red-50 p-4 text-red-700">
+          <p className="font-bold">No se pudo crear el pedido.</p>
+          <p className="mt-1 text-sm">{errorPedido}</p>
+        </div>
+      )}
+
+      {pedidoCreado && (
         <div className="mt-6 rounded-xl bg-emerald-50 p-4 text-emerald-800">
-          <p className="font-bold">Pedido preparado correctamente.</p>
-          <p className="mt-1 text-sm">
-            Cliente: {pedidoPreparado.cliente.nombreCompleto}
+          <p className="font-bold">Pedido creado correctamente.</p>
+          <p className="mt-1 text-sm">Código: {pedidoCreado.codigo}</p>
+          <p className="text-sm">
+            Cliente: {pedidoCreado.cliente_nombre}
           </p>
           <p className="text-sm">
-            Total: {formatearPrecio(pedidoPreparado.total)}
+            Total: {formatearPrecio(Number(pedidoCreado.total))}
           </p>
         </div>
       )}
