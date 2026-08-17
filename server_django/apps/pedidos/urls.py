@@ -3,12 +3,17 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from apps.pedidos.views import DetallePedidoViewSet, PedidoViewSet
+from apps.pedidos.views import (
+    DetallePedidoViewSet,
+    PedidoPublicoCreateAPIView,
+    PedidoViewSet,
+)
 
 router = DefaultRouter()
 router.register("pedidos", PedidoViewSet, basename="pedidos")
 router.register("detalle-pedidos", DetallePedidoViewSet, basename="detalle-pedidos")
 
 urlpatterns = [
+    path("pedidos-publicos/", PedidoPublicoCreateAPIView.as_view()),
     path("", include(router.urls)),
 ]
