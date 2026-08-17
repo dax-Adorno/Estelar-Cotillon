@@ -111,7 +111,39 @@ function App() {
       ];
     });
   }
+  function incrementarProductoCarrito(productoId: number): void {
+  setCarritoItems((itemsActuales) =>
+    itemsActuales.map((item) =>
+      item.producto.id === productoId
+        ? {
+            ...item,
+            cantidad: item.cantidad + 1,
+          }
+        : item,
+    ),
+  );
+}
 
+  function disminuirProductoCarrito(productoId: number): void {
+  setCarritoItems((itemsActuales) =>
+    itemsActuales
+      .map((item) =>
+        item.producto.id === productoId
+          ? {
+              ...item,
+              cantidad: item.cantidad - 1,
+            }
+          : item,
+      )
+      .filter((item) => item.cantidad > 0),
+  );
+}
+
+  function quitarProductoCarrito(productoId: number): void {
+  setCarritoItems((itemsActuales) =>
+    itemsActuales.filter((item) => item.producto.id !== productoId),
+  );
+}
   return (
     <main className="min-h-screen bg-orange-50 px-6 py-10 text-slate-900">
       <section className="mx-auto max-w-6xl">
@@ -201,7 +233,12 @@ function App() {
               )}
             </section>
 
-            <CartSummary items={carritoItems} />
+            <CartSummary
+              items={carritoItems}
+              onDisminuirProducto={disminuirProductoCarrito}
+              onIncrementarProducto={incrementarProductoCarrito}
+              onQuitarProducto={quitarProductoCarrito}
+            />
 
             {promocionesVigentes.length > 0 && (
               <section className="mt-10" id="promociones">
