@@ -1,3 +1,4 @@
+import { ProductImageZoom } from "./ProductImageZoom";
 import type { Producto } from "../types";
 
 interface ProductCardProps {
@@ -24,18 +25,7 @@ export function ProductCard({ producto }: ProductCardProps) {
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-orange-100">
-      {imagenProducto ? (
-        <img
-          alt={producto.nombre}
-          className="h-52 w-full object-cover"
-          loading="lazy"
-          src={imagenProducto}
-        />
-      ) : (
-        <div className="flex h-52 w-full items-center justify-center bg-orange-100 px-6 text-center text-sm font-semibold text-orange-700">
-          Imagen no disponible
-        </div>
-      )}
+      <ProductImageZoom imageUrl={imagenProducto} alt={producto.nombre} />
 
       <div className="flex flex-1 flex-col p-6">
         <div className="flex items-start justify-between gap-3">
