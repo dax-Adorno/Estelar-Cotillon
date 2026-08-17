@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
+import { CartSummary } from "./features/carrito/components/CartSummary";
+import type { CarritoItem } from "./features/carrito/types";
 import {
   obtenerCategorias,
   obtenerProductos,
@@ -21,6 +23,7 @@ function App() {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [productos, setProductos] = useState<Producto[]>([]);
   const [promociones, setPromociones] = useState<Promocion[]>([]);
+  const [carritoItems, setCarritoItems] = useState<CarritoItem[]>([]);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("todas");
   const [soloDestacados, setSoloDestacados] = useState(false);
   const [terminoBusqueda, setTerminoBusqueda] = useState("");
@@ -81,6 +84,33 @@ function App() {
       (promocion) => promocion.activa && promocion.vigente,
     );
   }, [promociones]);
+
+  function agregarProductoAlCarrito(producto: Producto): void {
+    setCarritoItems((itemsActuales) => {
+      const itemExistente = itemsActuales.find(
+        (item) => item.producto.id === producto.id,
+      );
+
+      if (itemExistente) {
+        return itemsActuales.map((item) =>
+          item.producto.id === producto.id
+            ? {
+                ...item,
+                cantidad: item.cantidad + 1,
+              }
+            : item,
+        );
+      }
+
+      return [
+        ...itemsActuales,
+        {
+          producto,
+          cantidad: 1,
+        },
+      ];
+    });
+  }
 
   return (
     <main className="min-h-screen bg-orange-50 px-6 py-10 text-slate-900">
@@ -161,11 +191,17 @@ function App() {
               ) : (
                 <div className="mt-6 grid gap-4 md:grid-cols-3">
                   {productosFiltrados.map((producto) => (
-                    <ProductCard key={producto.id} producto={producto} />
+                    <ProductCard
+                      key={producto.id}
+                      onAgregarProducto={agregarProductoAlCarrito}
+                      producto={producto}
+                    />
                   ))}
                 </div>
               )}
             </section>
+
+            <CartSummary items={carritoItems} />
 
             {promocionesVigentes.length > 0 && (
               <section className="mt-10" id="promociones">

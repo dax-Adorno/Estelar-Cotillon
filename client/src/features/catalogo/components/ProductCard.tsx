@@ -5,6 +5,7 @@ import type { Producto } from "../types";
 
 interface ProductCardProps {
   producto: Producto;
+  onAgregarProducto: (producto: Producto) => void;
 }
 
 interface ImagenGaleria {
@@ -64,10 +65,16 @@ function obtenerImagenesGaleria(producto: Producto): ImagenGaleria[] {
   ];
 }
 
-export function ProductCard({ producto }: ProductCardProps) {
+export function ProductCard({ producto, onAgregarProducto }: ProductCardProps) {
   const [indiceImagenSeleccionada, setIndiceImagenSeleccionada] = useState(0);
   const stockBajo = producto.stock <= 10;
-
+          <button
+            className="mt-4 w-full rounded-xl bg-orange-600 px-4 py-3 font-semibold text-white transition hover:bg-orange-700"
+            onClick={() => onAgregarProducto(producto)}
+            type="button"
+          >
+            Agregar al carrito
+          </button>
   const imagenesGaleria = useMemo(
     () => obtenerImagenesGaleria(producto),
     [producto],
