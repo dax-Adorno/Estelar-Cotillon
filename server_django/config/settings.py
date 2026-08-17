@@ -157,3 +157,10 @@ MAILERS = {
         "BACKEND": "django.core.mail.backends.console.EmailBackend",
     },
 }
+REST_FRAMEWORK = {
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "120/min",
+        "user": "60/min",
+        "pedidos_publicos": "10/min",
+    },
+}

@@ -7,6 +7,8 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.core.throttles import PedidoPublicoAnonRateThrottle
+
 from apps.pedidos.models import DetallePedido, Pedido
 from apps.pedidos.serializers import (
     DetallePedidoSerializer,
@@ -43,6 +45,7 @@ class PedidoPublicoCreateAPIView(APIView):
     """Endpoint publico para crear pedidos desde el frontend."""
 
     permission_classes = (permissions.AllowAny,)
+    throttle_classes = (PedidoPublicoAnonRateThrottle,)
 
     def post(self, request: Request) -> Response:
         """Crea un pedido a partir del carrito del frontend."""
