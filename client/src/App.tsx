@@ -14,9 +14,26 @@ import type {
   Producto,
   Promocion,
 } from "./features/catalogo/types";
+import { CheckoutPedido } from "./features/pedidos/components/CheckoutPedido";
+import type {
+  DatosPedidoCliente,
+  PedidoPreparado,
+} from "./features/pedidos/types";
 
 function normalizarTexto(valor: string): string {
   return valor.trim().toLowerCase();
+}
+
+function calcularTotalCarrito(items: CarritoItem[]): number {
+  return items.reduce((total, item) => {
+    const precio = Number(item.producto.precio_minorista);
+
+    if (Number.isNaN(precio)) {
+      return total;
+    }
+
+    return total + precio * item.cantidad;
+  }, 0);
 }
 
 function App() {
@@ -24,6 +41,8 @@ function App() {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [promociones, setPromociones] = useState<Promocion[]>([]);
   const [carritoItems, setCarritoItems] = useState<CarritoItem[]>([]);
+  const [pedidoPreparado, setPedidoPreparado] =
+    useState<PedidoPreparado | null>(null);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("todas");
   const [soloDestacados, setSoloDestacados] = useState(false);
   const [terminoBusqueda, setTerminoBusqueda] = useState("");
@@ -86,6 +105,8 @@ function App() {
   }, [promociones]);
 
   function agregarProductoAlCarrito(producto: Producto): void {
+    setPedidoPreparado(null);
+
     setCarritoItems((itemsActuales) => {
       const itemExistente = itemsActuales.find(
         (item) => item.producto.id === producto.id,
@@ -111,39 +132,56 @@ function App() {
       ];
     });
   }
-  function incrementarProductoCarrito(productoId: number): void {
-  setCarritoItems((itemsActuales) =>
-    itemsActuales.map((item) =>
-      item.producto.id === productoId
-        ? {
-            ...item,
-            cantidad: item.cantidad + 1,
-          }
-        : item,
-    ),
-  );
-}
 
-  function disminuirProductoCarrito(productoId: number): void {
-  setCarritoItems((itemsActuales) =>
-    itemsActuales
-      .map((item) =>
+  function incrementarProductoCarrito(productoId: number): void {
+    setPedidoPreparado(null);
+
+    setCarritoItems((itemsActuales) =>
+      itemsActuales.map((item) =>
         item.producto.id === productoId
           ? {
               ...item,
-              cantidad: item.cantidad - 1,
+              cantidad: item.cantidad + 1,
             }
           : item,
-      )
-      .filter((item) => item.cantidad > 0),
-  );
-}
+      ),
+    );
+  }
+
+  function disminuirProductoCarrito(productoId: number): void {
+    setPedidoPreparado(null);
+
+    setCarritoItems((itemsActuales) =>
+      itemsActuales
+        .map((item) =>
+          item.producto.id === productoId
+            ? {
+                ...item,
+                cantidad: item.cantidad - 1,
+              }
+            : item,
+        )
+        .filter((item) => item.cantidad > 0),
+    );
+  }
 
   function quitarProductoCarrito(productoId: number): void {
-  setCarritoItems((itemsActuales) =>
-    itemsActuales.filter((item) => item.producto.id !== productoId),
-  );
-}
+    setPedidoPreparado(null);
+
+    setCarritoItems((itemsActuales) =>
+      itemsActuales.filter((item) => item.producto.id !== productoId),
+    );
+  }
+
+  function prepararPedido(datosCliente: DatosPedidoCliente): void {
+    setPedidoPreparado({
+      cliente: datosCliente,
+      items: carritoItems,
+      total: calcularTotalCarrito(carritoItems),
+      creadoEn: new Date().toISOString(),
+    });
+  }
+
   return (
     <main className="min-h-screen bg-orange-50 px-6 py-10 text-slate-900">
       <section className="mx-auto max-w-6xl">
@@ -238,6 +276,12 @@ function App() {
               onDisminuirProducto={disminuirProductoCarrito}
               onIncrementarProducto={incrementarProductoCarrito}
               onQuitarProducto={quitarProductoCarrito}
+            />
+
+            <CheckoutPedido
+              items={carritoItems}
+              onPrepararPedido={prepararPedido}
+              pedidoPreparado={pedidoPreparado}
             />
 
             {promocionesVigentes.length > 0 && (
