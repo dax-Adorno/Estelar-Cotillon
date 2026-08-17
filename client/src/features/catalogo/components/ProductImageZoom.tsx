@@ -2,6 +2,7 @@ import { useState } from "react";
 
 interface ProductImageZoomProps {
   imageUrl: string | null;
+  zoomUrl?: string | null;
   alt: string;
 }
 
@@ -10,7 +11,11 @@ interface MousePosition {
   y: number;
 }
 
-export function ProductImageZoom({ imageUrl, alt }: ProductImageZoomProps) {
+export function ProductImageZoom({
+  imageUrl,
+  zoomUrl,
+  alt,
+}: ProductImageZoomProps) {
   const [isHovering, setIsHovering] = useState(false);
   const [mousePosition, setMousePosition] = useState<MousePosition>({
     x: 50,
@@ -24,6 +29,8 @@ export function ProductImageZoom({ imageUrl, alt }: ProductImageZoomProps) {
       </div>
     );
   }
+
+  const zoomImageUrl = zoomUrl ?? imageUrl;
 
   return (
     <div
@@ -50,7 +57,7 @@ export function ProductImageZoom({ imageUrl, alt }: ProductImageZoomProps) {
           aria-hidden="true"
           className="pointer-events-none absolute right-4 top-4 hidden h-28 w-28 rounded-full border-4 border-white bg-white shadow-xl md:block"
           style={{
-            backgroundImage: `url(${imageUrl})`,
+            backgroundImage: `url(${zoomImageUrl})`,
             backgroundPosition: `${mousePosition.x}% ${mousePosition.y}%`,
             backgroundRepeat: "no-repeat",
             backgroundSize: "260%",
