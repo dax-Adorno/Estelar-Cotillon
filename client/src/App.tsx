@@ -15,25 +15,17 @@ import type {
   Promocion,
 } from "./features/catalogo/types";
 import { CheckoutPedido } from "./features/pedidos/components/CheckoutPedido";
+import {
+  construirPedidoPublicoPayload,
+  crearPedidoPublico,
+} from "./features/pedidos/pedidosApi";
 import type {
   DatosPedidoCliente,
-  PedidoPreparado,
+  PedidoPublicoResponse,
 } from "./features/pedidos/types";
 
 function normalizarTexto(valor: string): string {
   return valor.trim().toLowerCase();
-}
-
-function calcularTotalCarrito(items: CarritoItem[]): number {
-  return items.reduce((total, item) => {
-    const precio = Number(item.producto.precio_minorista);
-
-    if (Number.isNaN(precio)) {
-      return total;
-    }
-
-    return total + precio * item.cantidad;
-  }, 0);
 }
 
 function App() {
@@ -41,8 +33,10 @@ function App() {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [promociones, setPromociones] = useState<Promocion[]>([]);
   const [carritoItems, setCarritoItems] = useState<CarritoItem[]>([]);
-  const [pedidoPreparado, setPedidoPreparado] =
-    useState<PedidoPreparado | null>(null);
+  const [pedidoCreado, setPedidoCreado] =
+    useState<PedidoPublicoResponse | null>(null);
+  const [errorPedido, setErrorPedido] = useState<string | null>(null);
+  const [enviandoPedido, setEnviandoPedido] = useState(false);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("todas");
   const [soloDestacados, setSoloDestacados] = useState(false);
   const [terminoBusqueda, setTerminoBusqueda] = useState("");
@@ -104,8 +98,13 @@ function App() {
     );
   }, [promociones]);
 
+  function limpiarEstadoPedido(): void {
+    setPedidoCreado(null);
+    setErrorPedido(null);
+  }
+
   function agregarProductoAlCarrito(producto: Producto): void {
-    setPedidoPreparado(null);
+    limpiarEstadoPedido();
 
     setCarritoItems((itemsActuales) => {
       const itemExistente = itemsActuales.find(
@@ -134,7 +133,7 @@ function App() {
   }
 
   function incrementarProductoCarrito(productoId: number): void {
-    setPedidoPreparado(null);
+    limpiarEstadoPedido();
 
     setCarritoItems((itemsActuales) =>
       itemsActuales.map((item) =>
@@ -149,7 +148,7 @@ function App() {
   }
 
   function disminuirProductoCarrito(productoId: number): void {
-    setPedidoPreparado(null);
+    limpiarEstadoPedido();
 
     setCarritoItems((itemsActuales) =>
       itemsActuales
@@ -166,20 +165,42 @@ function App() {
   }
 
   function quitarProductoCarrito(productoId: number): void {
-    setPedidoPreparado(null);
+    limpiarEstadoPedido();
 
     setCarritoItems((itemsActuales) =>
       itemsActuales.filter((item) => item.producto.id !== productoId),
     );
   }
 
-  function prepararPedido(datosCliente: DatosPedidoCliente): void {
-    setPedidoPreparado({
-      cliente: datosCliente,
-      items: carritoItems,
-      total: calcularTotalCarrito(carritoItems),
-      creadoEn: new Date().toISOString(),
-    });
+  async function enviarPedido(datosCliente: DatosPedidoCliente): Promise<void> {
+    if (carritoItems.length === 0) {
+      setErrorPedido("El carrito está vacío.");
+      return;
+    }
+
+    setEnviandoPedido(true);
+    setErrorPedido(null);
+    setPedidoCreado(null);
+
+    try {
+      const payload = construirPedidoPublicoPayload(
+        datosCliente,
+        carritoItems,
+      );
+      const pedido = await crearPedidoPublico(payload);
+
+      setPedidoCreado(pedido);
+      setCarritoItems([]);
+    } catch (unknownError) {
+      const mensaje =
+        unknownError instanceof Error
+          ? unknownError.message
+          : "No se pudo crear el pedido.";
+
+      setErrorPedido(mensaje);
+    } finally {
+      setEnviandoPedido(false);
+    }
   }
 
   return (
@@ -279,9 +300,11 @@ function App() {
             />
 
             <CheckoutPedido
+              enviandoPedido={enviandoPedido}
+              errorPedido={errorPedido}
               items={carritoItems}
-              onPrepararPedido={prepararPedido}
-              pedidoPreparado={pedidoPreparado}
+              onEnviarPedido={enviarPedido}
+              pedidoCreado={pedidoCreado}
             />
 
             {promocionesVigentes.length > 0 && (
