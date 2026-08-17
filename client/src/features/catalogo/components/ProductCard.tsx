@@ -1,8 +1,17 @@
+import { useMemo, useState } from "react";
+
 import { ProductImageZoom } from "./ProductImageZoom";
 import type { Producto } from "../types";
 
 interface ProductCardProps {
   producto: Producto;
+}
+
+interface ImagenGaleria {
+  id: number;
+  displayUrl: string;
+  zoomUrl: string;
+  alt: string;
 }
 
 function formatearPrecio(valor: string): string {
@@ -18,14 +27,86 @@ function formatearPrecio(valor: string): string {
   });
 }
 
+function obtenerImagenesGaleria(producto: Producto): ImagenGaleria[] {
+  const imagenes = producto.imagenes ?? [];
+
+  if (imagenes.length > 0) {
+    return [...imagenes]
+      .sort((actual, siguiente) => {
+        if (actual.principal !== siguiente.principal) {
+          return actual.principal ? -1 : 1;
+        }
+
+        return actual.orden - siguiente.orden || actual.id - siguiente.id;
+      })
+      .map((imagen) => ({
+        id: imagen.id,
+        displayUrl: imagen.thumbnail_url || imagen.imagen_url,
+        zoomUrl: imagen.imagen_url || imagen.thumbnail_url,
+        alt: imagen.texto_alt || producto.nombre,
+      }));
+  }
+
+  const displayUrl = producto.thumbnail_principal ?? producto.imagen_principal;
+  const zoomUrl = producto.imagen_principal ?? producto.thumbnail_principal;
+
+  if (!displayUrl || !zoomUrl) {
+    return [];
+  }
+
+  return [
+    {
+      id: 0,
+      displayUrl,
+      zoomUrl,
+      alt: producto.nombre,
+    },
+  ];
+}
+
 export function ProductCard({ producto }: ProductCardProps) {
+  const [indiceImagenSeleccionada, setIndiceImagenSeleccionada] = useState(0);
   const stockBajo = producto.stock <= 10;
-  const imagenProducto =
-    producto.thumbnail_principal ?? producto.imagen_principal;
+
+  const imagenesGaleria = useMemo(
+    () => obtenerImagenesGaleria(producto),
+    [producto],
+  );
+
+  const imagenSeleccionada = imagenesGaleria[indiceImagenSeleccionada] ?? null;
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-orange-100">
-      <ProductImageZoom imageUrl={imagenProducto} alt={producto.nombre} />
+      <ProductImageZoom
+        alt={imagenSeleccionada?.alt ?? producto.nombre}
+        imageUrl={imagenSeleccionada?.displayUrl ?? null}
+        zoomUrl={imagenSeleccionada?.zoomUrl ?? null}
+      />
+
+      {imagenesGaleria.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto border-b border-orange-100 bg-white p-3">
+          {imagenesGaleria.map((imagen, index) => (
+            <button
+              aria-label={`Ver imagen ${index + 1} de ${producto.nombre}`}
+              className={
+                index === indiceImagenSeleccionada
+                  ? "h-14 w-14 shrink-0 overflow-hidden rounded-lg ring-2 ring-orange-500"
+                  : "h-14 w-14 shrink-0 overflow-hidden rounded-lg ring-1 ring-orange-200"
+              }
+              key={imagen.id}
+              onClick={() => setIndiceImagenSeleccionada(index)}
+              type="button"
+            >
+              <img
+                alt=""
+                className="h-full w-full object-cover"
+                loading="lazy"
+                src={imagen.displayUrl}
+              />
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="flex flex-1 flex-col p-6">
         <div className="flex items-start justify-between gap-3">
