@@ -1,7 +1,6 @@
 """Tests de seguridad para pedidos publicos."""
 
 from decimal import Decimal
-
 import pytest
 from django.core.cache import cache
 from pytest import MonkeyPatch
@@ -78,7 +77,6 @@ def test_pedido_publico_aplica_rate_limit(
             "pedidos_publicos": "1/min",
         },
     )
-
     payload = _payload_pedido(producto)
 
     primera_respuesta = api_client.post(
@@ -91,6 +89,5 @@ def test_pedido_publico_aplica_rate_limit(
         payload,
         format="json",
     )
-
     assert primera_respuesta.status_code == status.HTTP_201_CREATED
     assert segunda_respuesta.status_code == status.HTTP_429_TOO_MANY_REQUESTS
