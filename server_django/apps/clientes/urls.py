@@ -8,6 +8,7 @@ from apps.clientes.views import (
     ClienteViewSet,
     ConfirmarRestablecerPasswordAPIView,
     InicioSesionAPIView,
+    MiCuentaAPIView,
     RegistroUsuarioAPIView,
     PerfilUsuarioViewSet,
     SolicitarRestablecerPasswordAPIView,
@@ -25,6 +26,7 @@ router.register(
 )
 
 urlpatterns = [
+    path("mi-cuenta/", MiCuentaAPIView.as_view(), name="mi-cuenta"),
     path("auth/csrf/", csrf_token_view, name="auth-csrf"),
     path(
         "auth/registro/",

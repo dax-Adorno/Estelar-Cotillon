@@ -23,11 +23,16 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.clientes.models import Cliente, PerfilUsuario
-from apps.clientes.permissions import EsAdminEstelart, EsOperadorOAdmin
+from apps.clientes.permissions import (
+    EsAdminEstelart,
+    EsClienteEstelart,
+    EsOperadorOAdmin,
+)
 from apps.clientes.serializers import (
     ClienteSerializer,
     ConfirmarRestablecerPasswordSerializer,
     InicioSesionSerializer,
+    MiCuentaSerializer,
     RegistroUsuarioSerializer,
     PerfilUsuarioAdminSerializer,
     SolicitudRestablecerPasswordSerializer,
@@ -56,6 +61,27 @@ class PerfilUsuarioViewSet(viewsets.ModelViewSet):
     permission_classes = (EsAdminEstelart,)
     serializer_class = PerfilUsuarioAdminSerializer
     queryset = PerfilUsuario.objects.select_related("usuario", "cliente").all()
+
+
+class MiCuentaAPIView(APIView):
+    """Consulta y edicion limitada de la ficha del cliente autenticado."""
+
+    permission_classes = (EsClienteEstelart,)
+
+    def get(self, request: Request) -> Response:
+        cliente = request.user.perfil_estelart.cliente
+        return Response(MiCuentaSerializer(cliente).data)
+
+    def patch(self, request: Request) -> Response:
+        cliente = request.user.perfil_estelart.cliente
+        serializer = MiCuentaSerializer(
+            cliente,
+            data=request.data,
+            partial=True,
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 
 @require_GET

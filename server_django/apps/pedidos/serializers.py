@@ -218,3 +218,45 @@ class PedidoPublicoResponseSerializer(serializers.ModelSerializer):
             "total",
             "creado_en",
         )
+
+
+class DetallePedidoClienteSerializer(serializers.ModelSerializer):
+    """Linea de pedido visible para el cliente propietario."""
+
+    producto_nombre = serializers.CharField(source="producto.nombre", read_only=True)
+    producto_sku = serializers.CharField(source="producto.sku", read_only=True)
+
+    class Meta:
+        model = DetallePedido
+        fields = (
+            "id",
+            "producto",
+            "producto_nombre",
+            "producto_sku",
+            "cantidad",
+            "precio_unitario",
+            "subtotal",
+        )
+
+
+class PedidoClienteSerializer(serializers.ModelSerializer):
+    """Pedido sin datos internos ni referencias de otros clientes."""
+
+    detalles = DetallePedidoClienteSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Pedido
+        fields = (
+            "id",
+            "codigo",
+            "estado",
+            "estado_pago",
+            "canal_venta",
+            "subtotal",
+            "descuento",
+            "total",
+            "notas",
+            "detalles",
+            "creado_en",
+            "actualizado_en",
+        )

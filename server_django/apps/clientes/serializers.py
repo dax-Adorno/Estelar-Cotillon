@@ -276,3 +276,50 @@ class PerfilUsuarioAdminSerializer(serializers.ModelSerializer):
                 perfil.cliente.tipo_cliente = Cliente.TipoCliente.MINORISTA
             perfil.cliente.save(update_fields=["tipo_cliente", "actualizado_en"])
         return perfil
+
+
+class MiCuentaSerializer(serializers.ModelSerializer):
+    """Datos comerciales que el cliente puede consultar y actualizar."""
+
+    class Meta:
+        model = Cliente
+        fields = (
+            "id",
+            "nombre",
+            "apellido",
+            "razon_social",
+            "tipo_cliente",
+            "email",
+            "telefono",
+            "whatsapp",
+            "documento",
+            "cuit",
+            "direccion",
+            "ciudad",
+            "provincia",
+            "creado_en",
+            "actualizado_en",
+        )
+        read_only_fields = (
+            "id",
+            "tipo_cliente",
+            "email",
+            "creado_en",
+            "actualizado_en",
+        )
+
+    @transaction.atomic
+    def update(
+        self,
+        instance: Cliente,
+        validated_data: dict[str, Any],
+    ) -> Cliente:
+        """Mantiene nombre y apellido sincronizados con la cuenta Django."""
+        cliente = super().update(instance, validated_data)
+        perfil = getattr(cliente, "perfil_usuario", None)
+        if perfil is not None:
+            usuario = perfil.usuario
+            usuario.first_name = cliente.nombre
+            usuario.last_name = cliente.apellido
+            usuario.save(update_fields=["first_name", "last_name"])
+        return cliente
