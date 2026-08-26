@@ -150,6 +150,22 @@ El sistema permite administrar imágenes de producto con:
 - Galería por producto.
 - Fallback cuando no hay imagen disponible.
 
+### Gestión interna del catálogo
+
+Los operadores y administradores autenticados disponen de una API separada del
+catálogo público:
+
+- `GET|POST|PATCH /api/v1/gestion/categorias/`
+- `GET|POST|PATCH /api/v1/gestion/productos/`
+- `GET|POST|PATCH|DELETE /api/v1/gestion/imagenes-producto/`
+
+Las listas internas están paginadas y permiten búsqueda, orden y filtros por
+estado, categoría, disponibilidad de stock y productos destacados. Los slugs se
+generan automáticamente, los SKU se normalizan y los precios respetan las
+reglas minorista/mayorista. Productos y categorías se desactivan mediante
+`PATCH` para preservar el historial comercial; las imágenes sí se pueden
+eliminar junto con sus archivos derivados.
+
 ## Seguridad aplicada
 
 El sistema incluye controles básicos de seguridad para uso profesional:
@@ -326,34 +342,37 @@ docker compose --env-file .env.production -f docker-compose.prod.yml logs --tail
 Los archivos multimedia continúan en un volumen Docker. Antes de escalar a
 múltiples instancias se debe migrar ese almacenamiento a un servicio compatible
 con S3 y configurar copias de seguridad de PostgreSQL.
-Estado actual del sistema
+## Estado actual del sistema
 
 El sistema cuenta con:
 
-Backend funcional.
-Frontend funcional.
-Catálogo conectado a API.
-Carrito operativo.
-Checkout conectado al backend.
-Creación real de pedidos.
-Panel administrativo de pedidos.
-Reportes internos.
-Seguridad básica aplicada.
-Branding visual ESTELART.
-Validaciones locales completas.
-Pipeline CI/CD configurado.
-Próximas mejoras posibles
-Login de clientes mayoristas.
-Historial de pedidos por cliente.
-Integración con WhatsApp.
-Exportación de pedidos a Excel.
-Dashboard visual de reportes.
-Segmentación de clientes.
-Descuentos automáticos por volumen.
-Integración con medios de pago.
-Publicación o sincronización con canales externos.
-Despliegue productivo con dominio real, HTTPS y storage externo.
-Valor comercial
+- Backend funcional.
+- Frontend funcional.
+- Catálogo conectado a API.
+- Carrito operativo.
+- Checkout conectado al backend.
+- Creación real de pedidos.
+- Panel administrativo de pedidos.
+- Reportes internos.
+- Seguridad básica aplicada.
+- Branding visual ESTELART.
+- Validaciones locales completas.
+- Pipeline CI/CD configurado.
+- Autenticación, perfiles e historial de pedidos de clientes.
+- Gestión interna de categorías, productos, precios, stock e imágenes.
+
+## Próximas mejoras posibles
+
+- Integración con WhatsApp.
+- Exportación de pedidos a Excel.
+- Dashboard visual de reportes.
+- Segmentación de clientes.
+- Descuentos automáticos por volumen.
+- Integración con medios de pago.
+- Publicación o sincronización con canales externos.
+- Despliegue productivo con dominio real, HTTPS y storage externo.
+
+## Valor comercial
 
 ESTELART Platform transforma una operación comercial dispersa en un sistema centralizado, medible y escalable.
 

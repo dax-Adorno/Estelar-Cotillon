@@ -115,7 +115,12 @@ class ImagenProducto(models.Model):
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """Procesa la imagen original antes de guardar."""
-        if self._debe_procesar_imagen():
+        debe_procesar = self._debe_procesar_imagen()
+        archivos_anteriores = (
+            self._obtener_archivos_anteriores() if debe_procesar else []
+        )
+
+        if debe_procesar:
             nombre_base = self._generar_nombre_base()
             imagen_web, imagen_thumbnail = procesar_imagen_producto(
                 self.imagen,
@@ -137,6 +142,16 @@ class ImagenProducto(models.Model):
             )
 
         super().save(*args, **kwargs)
+        self._eliminar_archivos_reemplazados(archivos_anteriores)
+
+    def delete(self, *args: Any, **kwargs: Any) -> tuple[int, dict[str, int]]:
+        """Elimina tambien los archivos asociados cuando se borra la imagen."""
+        archivos = [self.imagen, self.imagen_web, self.imagen_thumbnail]
+        resultado = super().delete(*args, **kwargs)
+        for archivo in archivos:
+            if archivo and archivo.name:
+                archivo.storage.delete(archivo.name)
+        return resultado
 
     def _debe_procesar_imagen(self) -> bool:
         """Indica si deben generarse versiones optimizadas."""
@@ -166,3 +181,23 @@ class ImagenProducto(models.Model):
             base = "producto"
 
         return f"{base}-{uuid4().hex[:12]}"
+
+    def _obtener_archivos_anteriores(self) -> list[Any]:
+        """Recupera archivos previos antes de reemplazar una imagen."""
+        if self.pk is None:
+            return []
+        anterior = ImagenProducto.objects.filter(pk=self.pk).first()
+        if anterior is None:
+            return []
+        return [anterior.imagen, anterior.imagen_web, anterior.imagen_thumbnail]
+
+    def _eliminar_archivos_reemplazados(self, archivos: list[Any]) -> None:
+        """Evita acumular originales y derivados obsoletos."""
+        nombres_actuales = {
+            archivo.name
+            for archivo in (self.imagen, self.imagen_web, self.imagen_thumbnail)
+            if archivo and archivo.name
+        }
+        for archivo in archivos:
+            if archivo and archivo.name not in nombres_actuales:
+                archivo.storage.delete(archivo.name)
