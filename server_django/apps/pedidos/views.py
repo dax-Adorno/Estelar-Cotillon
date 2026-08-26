@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.core.throttles import PedidoPublicoAnonRateThrottle
+from apps.clientes.permissions import EsOperadorOAdmin
 
 from apps.pedidos.models import DetallePedido, Pedido
 from apps.pedidos.serializers import (
@@ -21,7 +22,7 @@ from apps.pedidos.serializers import (
 class PedidoViewSet(viewsets.ReadOnlyModelViewSet):
     """API de solo lectura para pedidos."""
 
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (EsOperadorOAdmin,)
     serializer_class = PedidoSerializer
     queryset = (
         Pedido.objects.select_related("cliente")
@@ -33,7 +34,7 @@ class PedidoViewSet(viewsets.ReadOnlyModelViewSet):
 class DetallePedidoViewSet(viewsets.ReadOnlyModelViewSet):
     """API de solo lectura para detalles de pedidos."""
 
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (EsOperadorOAdmin,)
     serializer_class = DetallePedidoSerializer
     queryset = DetallePedido.objects.select_related(
         "pedido",

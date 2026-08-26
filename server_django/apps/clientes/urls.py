@@ -9,6 +9,7 @@ from apps.clientes.views import (
     ConfirmarRestablecerPasswordAPIView,
     InicioSesionAPIView,
     RegistroUsuarioAPIView,
+    PerfilUsuarioViewSet,
     SolicitarRestablecerPasswordAPIView,
     UsuarioActualAPIView,
     VerificarEmailAPIView,
@@ -17,6 +18,11 @@ from apps.clientes.views import (
 
 router = DefaultRouter()
 router.register("clientes", ClienteViewSet, basename="clientes")
+router.register(
+    "perfiles-usuario",
+    PerfilUsuarioViewSet,
+    basename="perfiles-usuario",
+)
 
 urlpatterns = [
     path("auth/csrf/", csrf_token_view, name="auth-csrf"),

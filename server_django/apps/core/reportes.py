@@ -4,12 +4,12 @@ from decimal import Decimal
 from typing import Any
 
 from django.db.models import Count, Sum
-from rest_framework import permissions
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.pedidos.models import DetallePedido, Pedido
+from apps.clientes.permissions import EsOperadorOAdmin
 from apps.productos.models import Categoria, Producto
 from apps.promociones.models import Promocion
 
@@ -141,7 +141,7 @@ def _productos_stock_bajo() -> list[dict[str, Any]]:
 class ResumenComercialAPIView(APIView):
     """Endpoint interno de resumen comercial."""
 
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (EsOperadorOAdmin,)
 
     def get(self, request: Request) -> Response:
         """Devuelve metricas basicas del negocio."""
