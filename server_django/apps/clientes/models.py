@@ -2,6 +2,7 @@
 
 # pylint: disable=too-many-ancestors
 
+from django.conf import settings
 from django.db import models
 
 
@@ -52,3 +53,45 @@ class Cliente(models.Model):
 
         nombre_completo = f"{self.nombre} {self.apellido}".strip()
         return nombre_completo
+
+
+class PerfilUsuario(models.Model):
+    """Rol comercial y operativo asociado a una cuenta autenticada."""
+
+    class Rol(models.TextChoices):
+        """Roles disponibles en la plataforma."""
+
+        CLIENTE_MINORISTA = "cliente_minorista", "Cliente minorista"
+        CLIENTE_MAYORISTA = "cliente_mayorista", "Cliente mayorista"
+        OPERADOR = "operador", "Operador"
+        ADMIN = "admin", "Administrador"
+
+    usuario = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="perfil_estelart",
+    )
+    cliente = models.OneToOneField(
+        Cliente,
+        on_delete=models.SET_NULL,
+        related_name="perfil_usuario",
+        null=True,
+        blank=True,
+    )
+    rol = models.CharField(
+        max_length=30,
+        choices=Rol.choices,
+        default=Rol.CLIENTE_MINORISTA,
+    )
+    mayorista_aprobado = models.BooleanField(default=False)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "perfiles_usuario"
+        verbose_name = "perfil de usuario"
+        verbose_name_plural = "perfiles de usuario"
+        indexes = [models.Index(fields=["rol"])]
+
+    def __str__(self) -> str:
+        return f"{self.usuario.username} ({self.get_rol_display()})"
