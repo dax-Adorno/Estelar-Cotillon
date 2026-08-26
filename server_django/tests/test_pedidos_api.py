@@ -92,9 +92,9 @@ def test_api_lista_pedidos_para_admin(
     response = api_client.get(reverse("pedidos-list"))
 
     assert response.status_code == 200
-    assert len(response.data) == 1
-    assert response.data[0]["codigo"] == "PED-001"
-    assert response.data[0]["estado"] == Pedido.EstadoPedido.CONFIRMADO
+    assert response.data["count"] == 1
+    assert response.data["results"][0]["codigo"] == "PED-001"
+    assert response.data["results"][0]["estado"] == Pedido.EstadoPedido.CONFIRMADO
 
 
 @pytest.mark.django_db
@@ -160,5 +160,5 @@ def test_api_lista_detalle_pedidos_para_admin(
     response = api_client.get(reverse("detalle-pedidos-list"))
 
     assert response.status_code == 200
-    assert len(response.data) == 1
-    assert response.data[0]["producto_nombre"] == "Limpiapipas surtidos"
+    assert response.data["count"] == 1
+    assert response.data["results"][0]["producto_nombre"] == "Limpiapipas surtidos"

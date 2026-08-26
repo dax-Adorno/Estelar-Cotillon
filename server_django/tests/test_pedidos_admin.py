@@ -7,7 +7,7 @@ from django.contrib.admin.sites import AdminSite
 from django.test import RequestFactory
 
 from apps.clientes.models import Cliente
-from apps.pedidos.admin import DetallePedidoInline, PedidoAdmin
+from apps.pedidos.admin import DetallePedidoInline, EventoPedidoInline, PedidoAdmin
 from apps.pedidos.models import DetallePedido, Pedido
 from apps.productos.models import Categoria, Producto
 
@@ -100,3 +100,18 @@ def test_detalle_pedido_inline_no_permite_alta_ni_baja_manual(
 
     assert inline.has_add_permission(request, pedido_con_detalle) is False
     assert inline.has_delete_permission(request, pedido_con_detalle) is False
+
+
+@pytest.mark.django_db
+def test_admin_protege_estados_y_eventos_de_edicion_directa(
+    pedido_con_detalle: Pedido,
+) -> None:
+    """Los cambios operativos deben pasar por servicios auditados."""
+    request = RequestFactory().get("/admin/pedidos/pedido/")
+    pedido_admin = PedidoAdmin(Pedido, AdminSite())
+    inline_eventos = EventoPedidoInline(Pedido, AdminSite())
+
+    assert "estado" in pedido_admin.readonly_fields
+    assert "estado_pago" in pedido_admin.readonly_fields
+    assert inline_eventos.has_add_permission(request, pedido_con_detalle) is False
+    assert inline_eventos.has_delete_permission(request, pedido_con_detalle) is False
