@@ -4,6 +4,7 @@
 
 from decimal import Decimal
 
+from django.conf import settings
 from django.db import models
 
 
@@ -145,3 +146,44 @@ class DetallePedido(models.Model):
         """Calcula el subtotal del detalle."""
 
         return self.precio_unitario * self.cantidad
+
+
+class EventoPedido(models.Model):
+    """Registro inmutable de cambios operativos de un pedido."""
+
+    class TipoEvento(models.TextChoices):
+        """Operaciones auditables sobre pedidos."""
+
+        ESTADO = "estado", "Cambio de estado"
+        ESTADO_PAGO = "estado_pago", "Cambio de estado de pago"
+
+    pedido = models.ForeignKey(
+        Pedido,
+        on_delete=models.CASCADE,
+        related_name="eventos",
+    )
+    tipo = models.CharField(max_length=20, choices=TipoEvento.choices)
+    valor_anterior = models.CharField(max_length=30)
+    valor_nuevo = models.CharField(max_length=30)
+    comentario = models.CharField(max_length=500, blank=True)
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="eventos_pedido",
+        null=True,
+        blank=True,
+    )
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "eventos_pedido"
+        ordering = ["-creado_en", "-id"]
+        verbose_name = "evento de pedido"
+        verbose_name_plural = "eventos de pedido"
+        indexes = [
+            models.Index(fields=["pedido", "creado_en"]),
+            models.Index(fields=["tipo"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.pedido.codigo}: {self.valor_anterior} -> {self.valor_nuevo}"

@@ -10,7 +10,7 @@ from django.db import transaction
 from rest_framework import serializers
 
 from apps.clientes.models import Cliente
-from apps.pedidos.models import DetallePedido, Pedido
+from apps.pedidos.models import DetallePedido, EventoPedido, Pedido
 from apps.productos.models import Producto
 
 
@@ -42,6 +42,24 @@ class DetallePedidoSerializer(serializers.ModelSerializer):
         )
 
 
+class EventoPedidoSerializer(serializers.ModelSerializer):
+    """Evento operativo inmutable visible para personal interno."""
+
+    usuario_email = serializers.EmailField(source="usuario.email", read_only=True)
+
+    class Meta:
+        model = EventoPedido
+        fields = (
+            "id",
+            "tipo",
+            "valor_anterior",
+            "valor_nuevo",
+            "comentario",
+            "usuario_email",
+            "creado_en",
+        )
+
+
 class PedidoSerializer(serializers.ModelSerializer):
     """Serializer de pedido."""
 
@@ -53,6 +71,7 @@ class PedidoSerializer(serializers.ModelSerializer):
         many=True,
         read_only=True,
     )
+    eventos = EventoPedidoSerializer(many=True, read_only=True)
 
     class Meta:
         model = Pedido
@@ -69,9 +88,62 @@ class PedidoSerializer(serializers.ModelSerializer):
             "total",
             "notas",
             "detalles",
+            "eventos",
             "creado_en",
             "actualizado_en",
         )
+
+
+class PedidoResumenSerializer(serializers.ModelSerializer):
+    """Representacion liviana para listados operativos paginados."""
+
+    cliente_nombre = serializers.StringRelatedField(
+        source="cliente",
+        read_only=True,
+    )
+    cliente_email = serializers.EmailField(source="cliente.email", read_only=True)
+    cantidad_items = serializers.IntegerField(read_only=True)
+    cantidad_unidades = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Pedido
+        fields = (
+            "id",
+            "cliente",
+            "cliente_nombre",
+            "cliente_email",
+            "codigo",
+            "estado",
+            "estado_pago",
+            "canal_venta",
+            "total",
+            "cantidad_items",
+            "cantidad_unidades",
+            "creado_en",
+            "actualizado_en",
+        )
+
+
+class CambioEstadoPedidoSerializer(serializers.Serializer):
+    """Entrada explicita para una transicion del flujo del pedido."""
+
+    estado = serializers.ChoiceField(choices=Pedido.EstadoPedido.choices)
+    comentario = serializers.CharField(
+        allow_blank=True,
+        max_length=500,
+        required=False,
+    )
+
+
+class CambioEstadoPagoPedidoSerializer(serializers.Serializer):
+    """Entrada explicita para una transicion del flujo de cobro."""
+
+    estado_pago = serializers.ChoiceField(choices=Pedido.EstadoPago.choices)
+    comentario = serializers.CharField(
+        allow_blank=True,
+        max_length=500,
+        required=False,
+    )
 
 
 class PedidoPublicoItemSerializer(serializers.Serializer):
@@ -117,12 +189,22 @@ class PedidoPublicoCreateSerializer(serializers.Serializer):
         productos_existentes = Producto.objects.filter(
             id__in=producto_ids,
             activo=True,
+            categoria__activa=True,
         )
 
         if productos_existentes.count() != len(set(producto_ids)):
             raise serializers.ValidationError(
                 "Uno o mas productos no existen o no estan activos.",
             )
+
+        productos_por_id = {producto.pk: producto for producto in productos_existentes}
+        for item in items:
+            producto = productos_por_id[item["producto_id"]]
+            if item["cantidad"] > producto.stock:
+                raise serializers.ValidationError(
+                    f"Stock insuficiente para {producto.sku}: "
+                    f"disponible {producto.stock}.",
+                )
 
         return items
 

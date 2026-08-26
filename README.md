@@ -118,6 +118,21 @@ El panel de administración permite gestionar pedidos con:
 - Cantidad de ítems.
 - Cantidad de unidades.
 - Total del pedido.
+- Confirmación transaccional con reserva de stock.
+- Reposición automática de stock al cancelar una confirmación.
+- Transiciones controladas de pedido y de pago.
+- Reembolso obligatorio antes de cancelar pedidos cobrados.
+- Historial inmutable con usuario, fecha y comentario.
+
+La API interna expone listados paginados con búsqueda y filtros, además de las
+operaciones explícitas:
+
+- `POST /api/v1/pedidos/{id}/cambiar-estado/`
+- `POST /api/v1/pedidos/{id}/cambiar-estado-pago/`
+
+Los estados no se editan directamente. La API y las acciones masivas de Django
+Admin pasan por el mismo servicio transaccional para evitar sobreventa y cambios
+sin trazabilidad.
 
 ### Reportes comerciales
 
