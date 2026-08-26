@@ -55,3 +55,19 @@ class EsMayoristaAprobado(BasePermission):
             return False
         perfil = getattr(request.user, "perfil_estelart", None)
         return bool(perfil and perfil.mayorista_aprobado)
+
+
+class EsClienteEstelart(BasePermission):
+    """Permite acceso a clientes autenticados con ficha comercial vinculada."""
+
+    message = "La cuenta no tiene un perfil de cliente asociado."
+
+    def has_permission(self, request: Request, view: APIView) -> bool:
+        rol = obtener_rol_usuario(request.user)
+        if rol not in {
+            PerfilUsuario.Rol.CLIENTE_MINORISTA,
+            PerfilUsuario.Rol.CLIENTE_MAYORISTA,
+        }:
+            return False
+        perfil = getattr(request.user, "perfil_estelart", None)
+        return bool(perfil and perfil.cliente_id)
