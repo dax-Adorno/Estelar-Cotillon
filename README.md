@@ -299,6 +299,33 @@ Validación de Docker Compose.
 Auditoría de seguridad:
 
 .\scripts\security-check.ps1
+
+## Despliegue de producción
+
+La composición de producción usa Nginx para servir el frontend compilado y
+actuar como proxy de la API, Gunicorn para Django y PostgreSQL como base de
+datos. Los secretos no se incluyen en la imagen ni en el repositorio.
+
+1. Copiar `.env.production.example` a `.env.production`.
+2. Reemplazar el dominio, la clave de Django y la contraseña de PostgreSQL.
+3. Terminar TLS/HTTPS en el balanceador o proxy externo antes de habilitar
+   HSTS.
+4. Iniciar el stack:
+
+```powershell
+docker compose --env-file .env.production -f docker-compose.prod.yml up --build -d
+```
+
+5. Verificar `https://<dominio>/api/v1/health/` y revisar los logs:
+
+```powershell
+docker compose --env-file .env.production -f docker-compose.prod.yml ps
+docker compose --env-file .env.production -f docker-compose.prod.yml logs --tail 100
+```
+
+Los archivos multimedia continúan en un volumen Docker. Antes de escalar a
+múltiples instancias se debe migrar ese almacenamiento a un servicio compatible
+con S3 y configurar copias de seguridad de PostgreSQL.
 Estado actual del sistema
 
 El sistema cuenta con:

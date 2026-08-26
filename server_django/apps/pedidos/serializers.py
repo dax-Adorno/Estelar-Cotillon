@@ -78,7 +78,7 @@ class PedidoPublicoItemSerializer(serializers.Serializer):
     """Item recibido desde el frontend para crear un pedido."""
 
     producto_id = serializers.IntegerField(min_value=1)
-    cantidad = serializers.IntegerField(min_value=1)
+    cantidad = serializers.IntegerField(min_value=1, max_value=100)
 
 
 class PedidoPublicoCreateSerializer(serializers.Serializer):
@@ -104,7 +104,16 @@ class PedidoPublicoCreateSerializer(serializers.Serializer):
                 "El pedido debe incluir al menos un producto.",
             )
 
+        if len(items) > 50:
+            raise serializers.ValidationError(
+                "El pedido no puede superar 50 items diferentes.",
+            )
+
         producto_ids = [item["producto_id"] for item in items]
+        if len(producto_ids) != len(set(producto_ids)):
+            raise serializers.ValidationError(
+                "Cada producto debe aparecer una sola vez.",
+            )
         productos_existentes = Producto.objects.filter(
             id__in=producto_ids,
             activo=True,

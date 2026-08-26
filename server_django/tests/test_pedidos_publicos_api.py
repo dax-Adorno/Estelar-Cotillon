@@ -141,3 +141,54 @@ def test_crear_pedido_publico_rechaza_producto_inactivo(
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert Pedido.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_crear_pedido_publico_rechaza_producto_duplicado(
+    api_client: APIClient,
+    producto: Producto,
+) -> None:
+    """Impide dividir cantidades para eludir validaciones por item."""
+    payload = {
+        "nombre_completo": "Cliente Web",
+        "email": "cliente@example.com",
+        "whatsapp": "3764000000",
+        "notas": "",
+        "items": [
+            {"producto_id": producto.id, "cantidad": 1},
+            {"producto_id": producto.id, "cantidad": 1},
+        ],
+    }
+
+    response = api_client.post(
+        "/api/v1/pedidos-publicos/",
+        payload,
+        format="json",
+    )
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert Pedido.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_crear_pedido_publico_limita_cantidad_por_item(
+    api_client: APIClient,
+    producto: Producto,
+) -> None:
+    """Limita payloads abusivos en el endpoint anonimo."""
+    payload = {
+        "nombre_completo": "Cliente Web",
+        "email": "cliente@example.com",
+        "whatsapp": "3764000000",
+        "notas": "",
+        "items": [{"producto_id": producto.id, "cantidad": 101}],
+    }
+
+    response = api_client.post(
+        "/api/v1/pedidos-publicos/",
+        payload,
+        format="json",
+    )
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert Pedido.objects.count() == 0
