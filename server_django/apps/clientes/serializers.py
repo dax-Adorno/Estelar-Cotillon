@@ -187,3 +187,92 @@ class UsuarioActualSerializer(serializers.Serializer):
     apellido = serializers.CharField(read_only=True)
     rol = serializers.CharField(read_only=True)
     mayorista_aprobado = serializers.BooleanField(read_only=True)
+
+
+class PerfilUsuarioAdminSerializer(serializers.ModelSerializer):
+    """Gestion administrativa segura de roles y aprobaciones."""
+
+    email = serializers.EmailField(source="usuario.email", read_only=True)
+    nombre = serializers.CharField(source="usuario.first_name", read_only=True)
+    apellido = serializers.CharField(source="usuario.last_name", read_only=True)
+
+    class Meta:
+        model = PerfilUsuario
+        fields = (
+            "id",
+            "usuario",
+            "email",
+            "nombre",
+            "apellido",
+            "cliente",
+            "rol",
+            "mayorista_aprobado",
+            "creado_en",
+            "actualizado_en",
+        )
+        read_only_fields = (
+            "id",
+            "usuario",
+            "cliente",
+            "creado_en",
+            "actualizado_en",
+        )
+
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
+        """Evita escalamiento indebido y estados comerciales incoherentes."""
+        request = self.context.get("request")
+        nuevo_rol = attrs.get("rol", self.instance.rol)
+        aprobado = attrs.get(
+            "mayorista_aprobado",
+            self.instance.mayorista_aprobado,
+        )
+
+        if (
+            nuevo_rol == PerfilUsuario.Rol.ADMIN
+            and request is not None
+            and not request.user.is_superuser
+        ):
+            raise serializers.ValidationError(
+                {"rol": "Solo un superusuario puede asignar administradores."},
+            )
+        if (
+            request is not None
+            and self.instance.usuario_id == request.user.pk
+            and self.instance.rol == PerfilUsuario.Rol.ADMIN
+            and nuevo_rol != PerfilUsuario.Rol.ADMIN
+        ):
+            raise serializers.ValidationError(
+                {"rol": "No puedes quitar tu propio rol de administrador."},
+            )
+        if aprobado and nuevo_rol != PerfilUsuario.Rol.CLIENTE_MAYORISTA:
+            raise serializers.ValidationError(
+                {
+                    "mayorista_aprobado": (
+                        "Solo una cuenta mayorista puede recibir esta aprobacion."
+                    ),
+                },
+            )
+        return attrs
+
+    @transaction.atomic
+    def update(
+        self,
+        instance: PerfilUsuario,
+        validated_data: dict[str, Any],
+    ) -> PerfilUsuario:
+        """Actualiza el perfil y sincroniza permisos nativos y tipo de cliente."""
+        perfil = super().update(instance, validated_data)
+        usuario = perfil.usuario
+        usuario.is_staff = perfil.rol in {
+            PerfilUsuario.Rol.OPERADOR,
+            PerfilUsuario.Rol.ADMIN,
+        }
+        usuario.save(update_fields=["is_staff"])
+
+        if perfil.cliente is not None:
+            if perfil.rol == PerfilUsuario.Rol.CLIENTE_MAYORISTA:
+                perfil.cliente.tipo_cliente = Cliente.TipoCliente.MAYORISTA
+            elif perfil.rol == PerfilUsuario.Rol.CLIENTE_MINORISTA:
+                perfil.cliente.tipo_cliente = Cliente.TipoCliente.MINORISTA
+            perfil.cliente.save(update_fields=["tipo_cliente", "actualizado_en"])
+        return perfil

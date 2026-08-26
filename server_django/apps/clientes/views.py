@@ -23,11 +23,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.clientes.models import Cliente, PerfilUsuario
+from apps.clientes.permissions import EsAdminEstelart, EsOperadorOAdmin
 from apps.clientes.serializers import (
     ClienteSerializer,
     ConfirmarRestablecerPasswordSerializer,
     InicioSesionSerializer,
     RegistroUsuarioSerializer,
+    PerfilUsuarioAdminSerializer,
     SolicitudRestablecerPasswordSerializer,
     UsuarioActualSerializer,
 )
@@ -43,8 +45,17 @@ class ClienteViewSet(viewsets.ReadOnlyModelViewSet):
     """API de lectura para clientes activos."""
 
     serializer_class = ClienteSerializer
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (EsOperadorOAdmin,)
     queryset = Cliente.objects.filter(activo=True)
+
+
+class PerfilUsuarioViewSet(viewsets.ModelViewSet):
+    """Administracion restringida de roles y aprobaciones comerciales."""
+
+    http_method_names = ("get", "patch", "head", "options")
+    permission_classes = (EsAdminEstelart,)
+    serializer_class = PerfilUsuarioAdminSerializer
+    queryset = PerfilUsuario.objects.select_related("usuario", "cliente").all()
 
 
 @require_GET
