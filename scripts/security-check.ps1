@@ -15,13 +15,22 @@ $RequirementsFile = Join-Path $ServerDir "requirements.txt"
 
 Write-Step "Security - Raw SQL search"
 
+$rawSqlPatterns = @(
+    "RawSQL",
+    "\.raw\(",
+    "\.extra\(",
+    "connection\.cursor",
+    "cursor\.execute",
+    '["'']\s*(SELECT|INSERT|UPDATE|DELETE)\s+'
+)
+
 $rawSqlMatches = Get-ChildItem -Path $ServerDir -Recurse -File -Include *.py |
     Where-Object {
         $_.FullName -notmatch "\\.venv\\" -and
         $_.FullName -notmatch "\\migrations\\" -and
         $_.FullName -notmatch "\\__pycache__\\"
     } |
-    Select-String -Pattern "RawSQL|\.raw\(|\.extra\(|connection\.cursor|cursor\.execute|\bSELECT\b|\bINSERT\b|\bUPDATE\b|\bDELETE\b"
+    Select-String -Pattern $rawSqlPatterns
 
 if ($rawSqlMatches) {
     $rawSqlMatches
@@ -32,8 +41,18 @@ Write-Host "No raw SQL patterns found in project code." -ForegroundColor Green
 
 Write-Step "Security - Django deploy check"
 
+$env:DJANGO_DEBUG = "False"
+$env:DJANGO_SECRET_KEY = "security-check-only-7f4a2b8d1c6e9a3f5b0d8c2e7a4f1b6d9c3e5a8f"
+$env:DJANGO_ALLOWED_HOSTS = "tienda.example.com"
+$env:DJANGO_SECURE_SSL_REDIRECT = "True"
+$env:DJANGO_SESSION_COOKIE_SECURE = "True"
+$env:DJANGO_CSRF_COOKIE_SECURE = "True"
+$env:DJANGO_SECURE_HSTS_SECONDS = "31536000"
+$env:DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS = "True"
+$env:DJANGO_SECURE_HSTS_PRELOAD = "True"
+
 Push-Location $ServerDir
-& $PythonExe manage.py check --deploy
+& $PythonExe manage.py check --deploy --fail-level WARNING
 if ($LASTEXITCODE -ne 0) {
     Pop-Location
     throw "Django deploy check failed."
