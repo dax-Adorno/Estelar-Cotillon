@@ -121,7 +121,13 @@ describe("App", () => {
   it("deberia mostrar productos y promociones desde la API", async () => {
     render(<App />);
 
-    expect(screen.getByText("ESTELART Platform")).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", {
+        name: "ESTELART",
+      }),
+    ).toBeInTheDocument();
+
+    expect(screen.getByText("Plataforma comercial")).toBeInTheDocument();
 
     expect(
       screen.getByRole("heading", {

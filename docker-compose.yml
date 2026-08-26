@@ -37,7 +37,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./server_django:/app
+      - estelart_static:/app/staticfiles
     depends_on:
       db:
         condition: service_healthy
@@ -49,12 +49,12 @@ services:
     container_name: estelart_client
     restart: unless-stopped
     ports:
-      - "5173:5173"
+      - "5173:80"
     volumes:
-      - ./client:/app
-      - /app/node_modules
+      - estelart_static:/var/www/static:ro
     depends_on:
       - django_api
 
 volumes:
   estelart_postgres_data:
+  estelart_static:

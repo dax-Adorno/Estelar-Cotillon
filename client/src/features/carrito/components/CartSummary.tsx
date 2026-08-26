@@ -40,29 +40,31 @@ export function CartSummary({
   const subtotal = calcularSubtotal(items);
 
   return (
-    <section className="mt-10 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-orange-100">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <section className="rounded-2xl bg-white p-4 ring-1 ring-[#FFBA1F]/40">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-950">Carrito</h2>
-          <p className="mt-2 text-slate-600">
-            Resumen inicial de productos seleccionados.
+          <p className="text-sm font-black uppercase tracking-wide text-[#C41D85]">
+            Carrito
           </p>
+          <h2 className="mt-1 text-xl font-black text-[#3B3B3B]">
+            Pedido actual
+          </h2>
         </div>
 
-        <div className="rounded-xl bg-orange-50 px-5 py-4 text-right">
-          <p className="text-sm font-semibold text-slate-500">
-            Productos seleccionados
+        <div className="rounded-2xl bg-[#FFEEDC] px-4 py-3 text-center">
+          <p className="text-xs font-black uppercase text-[#3B3B3B]/60">
+            Unidades
           </p>
-          <p className="text-3xl font-bold text-slate-950">{cantidadTotal}</p>
+          <p className="text-2xl font-black text-[#FF6515]">{cantidadTotal}</p>
         </div>
       </div>
 
       {items.length === 0 ? (
-        <p className="mt-6 rounded-xl bg-orange-50 p-4 text-slate-600">
-          Todavía no agregaste productos al carrito.
+        <p className="mt-5 rounded-2xl bg-[#FFEEDC] p-4 text-sm font-semibold text-[#3B3B3B]/70">
+          Todavía no agregaste productos. Usá el catálogo para armar el pedido.
         </p>
       ) : (
-        <div className="mt-6 grid gap-3">
+        <div className="mt-5 grid gap-3">
           {items.map((item) => {
             const precioUnitario = Number(item.producto.precio_minorista);
             const subtotalItem = Number.isNaN(precioUnitario)
@@ -71,65 +73,70 @@ export function CartSummary({
 
             return (
               <article
-                className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-orange-100 p-4"
+                className="rounded-2xl border border-[#FFBA1F]/40 bg-white p-4"
                 key={item.producto.id}
               >
                 <div>
-                  <p className="font-semibold text-slate-950">
+                  <p className="font-black leading-tight text-[#3B3B3B]">
                     {item.producto.nombre}
                   </p>
-                  <p className="text-sm text-slate-500">
+                  <p className="mt-1 text-xs font-bold text-[#3B3B3B]/55">
                     SKU: {item.producto.sku}
                   </p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Unitario: {formatearPrecio(precioUnitario)}
-                  </p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    aria-label={`Disminuir ${item.producto.nombre}`}
-                    className="h-9 w-9 rounded-lg border border-orange-200 font-bold text-slate-700 transition hover:bg-orange-50"
-                    onClick={() => onDisminuirProducto(item.producto.id)}
-                    type="button"
-                  >
-                    -
-                  </button>
+                <div className="mt-4 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <button
+                      aria-label={`Disminuir ${item.producto.nombre}`}
+                      className="h-9 w-9 rounded-xl border border-[#FFBA1F]/60 bg-[#FFEEDC] font-black text-[#3B3B3B] transition hover:bg-[#FFBA1F]/30"
+                      onClick={() => onDisminuirProducto(item.producto.id)}
+                      type="button"
+                    >
+                      -
+                    </button>
 
-                  <span className="min-w-8 text-center font-bold">
-                    {item.cantidad}
-                  </span>
+                    <span className="min-w-8 text-center font-black text-[#3B3B3B]">
+                      {item.cantidad}
+                    </span>
 
-                  <button
-                    aria-label={`Incrementar ${item.producto.nombre}`}
-                    className="h-9 w-9 rounded-lg border border-orange-200 font-bold text-slate-700 transition hover:bg-orange-50"
-                    onClick={() => onIncrementarProducto(item.producto.id)}
-                    type="button"
-                  >
-                    +
-                  </button>
-                </div>
-
-                <div className="text-right">
-                  <p className="font-semibold">
-                    Subtotal: {formatearPrecio(subtotalItem)}
-                  </p>
+                    <button
+                      aria-label={`Incrementar ${item.producto.nombre}`}
+                      className="h-9 w-9 rounded-xl border border-[#FFBA1F]/60 bg-[#FFEEDC] font-black text-[#3B3B3B] transition hover:bg-[#FFBA1F]/30"
+                      onClick={() => onIncrementarProducto(item.producto.id)}
+                      type="button"
+                    >
+                      +
+                    </button>
+                  </div>
 
                   <button
-                    className="mt-2 text-sm font-semibold text-red-700 transition hover:text-red-800"
+                    className="text-sm font-black text-red-700 transition hover:text-red-800"
                     onClick={() => onQuitarProducto(item.producto.id)}
                     type="button"
                   >
                     Quitar
                   </button>
                 </div>
+
+                <div className="mt-4 rounded-xl bg-[#FFEEDC] p-3">
+                  <p className="text-xs font-bold text-[#3B3B3B]/60">
+                    Unitario: {formatearPrecio(precioUnitario)}
+                  </p>
+                  <p className="mt-1 font-black text-[#1D883F]">
+                    Subtotal: {formatearPrecio(subtotalItem)}
+                  </p>
+                </div>
               </article>
             );
           })}
 
-          <div className="mt-4 flex justify-end">
-            <p className="rounded-xl bg-orange-50 px-5 py-4 text-xl font-bold text-slate-950">
-              Subtotal: {formatearPrecio(subtotal)}
+          <div className="rounded-2xl bg-[#3B3B3B] p-4 text-white">
+            <p className="text-xs font-black uppercase text-white/60">
+              Total estimado
+            </p>
+            <p className="mt-1 text-2xl font-black">
+              {formatearPrecio(subtotal)}
             </p>
           </div>
         </div>

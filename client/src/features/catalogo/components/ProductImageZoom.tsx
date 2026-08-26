@@ -24,7 +24,7 @@ export function ProductImageZoom({
 
   if (!imageUrl) {
     return (
-      <div className="flex h-52 w-full items-center justify-center bg-orange-100 px-6 text-center text-sm font-semibold text-orange-700">
+      <div className="flex h-52 w-full items-center justify-center bg-[#FFEEDC] px-6 text-center text-sm font-bold text-[#C41D85]">
         Imagen no disponible
       </div>
     );
@@ -34,7 +34,7 @@ export function ProductImageZoom({
 
   return (
     <div
-      className="relative h-52 w-full overflow-hidden bg-orange-100"
+      className="relative h-52 w-full overflow-hidden bg-[#FFEEDC]"
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       onMouseMove={(event) => {
@@ -47,7 +47,7 @@ export function ProductImageZoom({
     >
       <img
         alt={alt}
-        className="h-full w-full object-cover"
+        className="h-full w-full object-cover transition duration-300 hover:scale-105"
         loading="lazy"
         src={imageUrl}
       />

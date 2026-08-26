@@ -65,16 +65,13 @@ function obtenerImagenesGaleria(producto: Producto): ImagenGaleria[] {
   ];
 }
 
-export function ProductCard({ producto, onAgregarProducto }: ProductCardProps) {
+export function ProductCard({
+  producto,
+  onAgregarProducto,
+}: ProductCardProps) {
   const [indiceImagenSeleccionada, setIndiceImagenSeleccionada] = useState(0);
   const stockBajo = producto.stock <= 10;
-          <button
-            className="mt-4 w-full rounded-xl bg-orange-600 px-4 py-3 font-semibold text-white transition hover:bg-orange-700"
-            onClick={() => onAgregarProducto(producto)}
-            type="button"
-          >
-            Agregar al carrito
-          </button>
+
   const imagenesGaleria = useMemo(
     () => obtenerImagenesGaleria(producto),
     [producto],
@@ -83,22 +80,40 @@ export function ProductCard({ producto, onAgregarProducto }: ProductCardProps) {
   const imagenSeleccionada = imagenesGaleria[indiceImagenSeleccionada] ?? null;
 
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-orange-100">
-      <ProductImageZoom
-        alt={imagenSeleccionada?.alt ?? producto.nombre}
-        imageUrl={imagenSeleccionada?.displayUrl ?? null}
-        zoomUrl={imagenSeleccionada?.zoomUrl ?? null}
-      />
+    <article className="group flex h-full flex-col overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-[#FFBA1F]/40 transition hover:-translate-y-1 hover:shadow-lg">
+      <div className="relative">
+        <ProductImageZoom
+          alt={imagenSeleccionada?.alt ?? producto.nombre}
+          imageUrl={imagenSeleccionada?.displayUrl ?? null}
+          zoomUrl={imagenSeleccionada?.zoomUrl ?? null}
+        />
+
+        {producto.destacado && (
+          <span className="absolute left-4 top-4 rounded-full bg-[#C41D85] px-3 py-1 text-xs font-black uppercase tracking-wide text-white shadow-sm">
+            Destacado
+          </span>
+        )}
+
+        <span
+          className={
+            stockBajo
+              ? "absolute bottom-4 right-4 rounded-full bg-red-100 px-3 py-1 text-xs font-black text-red-700"
+              : "absolute bottom-4 right-4 rounded-full bg-[#1D883F]/15 px-3 py-1 text-xs font-black text-[#1D883F]"
+          }
+        >
+          Stock: {producto.stock}
+        </span>
+      </div>
 
       {imagenesGaleria.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto border-b border-orange-100 bg-white p-3">
+        <div className="flex gap-2 overflow-x-auto border-b border-[#FFBA1F]/30 bg-white p-3">
           {imagenesGaleria.map((imagen, index) => (
             <button
               aria-label={`Ver imagen ${index + 1} de ${producto.nombre}`}
               className={
                 index === indiceImagenSeleccionada
-                  ? "h-14 w-14 shrink-0 overflow-hidden rounded-lg ring-2 ring-orange-500"
-                  : "h-14 w-14 shrink-0 overflow-hidden rounded-lg ring-1 ring-orange-200"
+                  ? "h-14 w-14 shrink-0 overflow-hidden rounded-xl ring-2 ring-[#FF6515]"
+                  : "h-14 w-14 shrink-0 overflow-hidden rounded-xl ring-1 ring-[#FFBA1F]/60"
               }
               key={imagen.id}
               onClick={() => setIndiceImagenSeleccionada(index)}
@@ -115,66 +130,60 @@ export function ProductCard({ producto, onAgregarProducto }: ProductCardProps) {
         </div>
       )}
 
-      <div className="flex flex-1 flex-col p-6">
+      <div className="flex flex-1 flex-col p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold text-orange-700">
+            <p className="text-sm font-black uppercase tracking-wide text-[#C41D85]">
               {producto.categoria_nombre}
             </p>
 
-            <h3 className="mt-2 text-xl font-bold text-slate-950">
+            <h3 className="mt-2 text-xl font-black leading-tight text-[#3B3B3B]">
               {producto.nombre}
             </h3>
           </div>
-
-          {producto.destacado && (
-            <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-700">
-              Destacado
-            </span>
-          )}
         </div>
 
-        <p className="mt-3 text-sm text-slate-500">SKU: {producto.sku}</p>
+        <p className="mt-3 inline-flex w-fit rounded-full bg-[#FFEEDC] px-3 py-1 text-xs font-bold text-[#3B3B3B]/75">
+          SKU: {producto.sku}
+        </p>
 
-        <p className="mt-4 line-clamp-3 text-sm text-slate-600">
+        <p className="mt-4 line-clamp-3 text-sm leading-6 text-[#3B3B3B]/70">
           {producto.descripcion ||
             "Producto disponible para catálogo comercial."}
         </p>
 
-        <div className="mt-6 grid gap-3 rounded-xl bg-orange-50 p-4">
-          <div>
-            <p className="text-xs font-semibold uppercase text-slate-500">
-              Minorista
-            </p>
-            <p className="text-lg font-bold text-slate-950">
-              {formatearPrecio(producto.precio_minorista)}
-            </p>
+        <div className="mt-6 grid gap-3 rounded-2xl bg-[#FFEEDC] p-4">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-black uppercase tracking-wide text-[#3B3B3B]/55">
+                Minorista
+              </p>
+              <p className="text-2xl font-black text-[#FF6515]">
+                {formatearPrecio(producto.precio_minorista)}
+              </p>
+            </div>
           </div>
 
-          <div>
-            <p className="text-xs font-semibold uppercase text-slate-500">
+          <div className="rounded-xl bg-white p-3">
+            <p className="text-xs font-black uppercase tracking-wide text-[#3B3B3B]/55">
               Mayorista
             </p>
-            <p className="text-lg font-bold text-slate-950">
+            <p className="text-lg font-black text-[#1D883F]">
               {formatearPrecio(producto.precio_mayorista)}
             </p>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs font-semibold text-[#3B3B3B]/60">
               Desde {producto.cantidad_minima_mayorista} unidades
             </p>
           </div>
         </div>
 
-        <div className="mt-auto pt-5">
-          <p
-            className={
-              stockBajo
-                ? "font-semibold text-red-700"
-                : "font-semibold text-emerald-700"
-            }
-          >
-            Stock: {producto.stock} unidades
-          </p>
-        </div>
+        <button
+          className="mt-5 w-full rounded-2xl bg-[#FF6515] px-4 py-3 font-black text-white shadow-sm transition hover:bg-[#C41D85] focus:outline-none focus:ring-4 focus:ring-[#FFBA1F]/50"
+          onClick={() => onAgregarProducto(producto)}
+          type="button"
+        >
+          Agregar al carrito
+        </button>
       </div>
     </article>
   );
