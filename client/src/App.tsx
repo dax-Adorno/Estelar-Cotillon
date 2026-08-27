@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { BrandCursor } from "./components/BrandCursor";
+import { obtenerSesionActual } from "./features/auth/authApi";
+import { AccesoCuenta } from "./features/auth/components/AccesoCuenta";
+import type { UsuarioActual } from "./features/auth/types";
 import { CartSummary } from "./features/carrito/components/CartSummary";
 import type { CarritoItem } from "./features/carrito/types";
 import {
@@ -42,6 +45,8 @@ function App() {
   const [terminoBusqueda, setTerminoBusqueda] = useState("");
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [usuario, setUsuario] = useState<UsuarioActual | null>(null);
+  const [cargandoSesion, setCargandoSesion] = useState(true);
 
   useEffect(() => {
     async function cargarCatalogo(): Promise<void> {
@@ -64,6 +69,13 @@ function App() {
     }
 
     void cargarCatalogo();
+  }, []);
+
+  useEffect(() => {
+    obtenerSesionActual()
+      .then(setUsuario)
+      .catch(() => setUsuario(null))
+      .finally(() => setCargandoSesion(false));
   }, []);
 
   const productosFiltrados = useMemo(() => {
@@ -251,7 +263,7 @@ return (
                 className="rounded-xl border border-[#1D883F]/30 bg-white px-5 py-3 font-bold text-[#1D883F] transition hover:bg-[#1D883F]/10"
                 href="#acceso"
               >
-                Ingresar
+                {usuario ? `Hola, ${usuario.nombre || "cuenta"}` : "Ingresar"}
               </a>
 
               <a
@@ -364,7 +376,7 @@ return (
                       Acceso privado
                     </p>
                     <p className="mt-2 text-sm text-[#3B3B3B]/70">
-                      Clientes mayoristas y operadores ingresarán desde una pantalla propia.
+                      Acceso real para clientes mayoristas, operadores y administradores.
                     </p>
                   </div>
                 </div>
@@ -493,34 +505,19 @@ return (
                 Acceso ESTELART
               </p>
               <h2 className="mt-2 text-3xl font-black text-[#3B3B3B]">
-                Login y registro mayorista
+                Tu cuenta ESTELART
               </h2>
               <p className="mt-3 text-[#3B3B3B]/70">
-                Esta sección queda preparada para el próximo módulo de autenticación:
-                clientes mayoristas, operadores y administradores con permisos
-                diferenciados.
+                Inicia sesión o solicita una cuenta mayorista. El acceso utiliza
+                sesión segura, protección CSRF y permisos definidos por el backend.
               </p>
             </div>
 
-            <div className="grid gap-3 rounded-3xl bg-white/85 p-5 shadow-sm">
-              <a
-                className="rounded-2xl bg-[#1D883F] px-5 py-3 text-center font-black text-white transition hover:bg-[#FF6515]"
-                href="#acceso"
-              >
-                Iniciar sesión
-              </a>
-
-              <a
-                className="rounded-2xl bg-[#C41D85] px-5 py-3 text-center font-black text-white transition hover:opacity-90"
-                href="#acceso"
-              >
-                Solicitar registro mayorista
-              </a>
-
-              <p className="text-center text-xs font-semibold text-[#3B3B3B]/60">
-                Próximo paso: autenticación real, roles y panel propio de gestión.
-              </p>
-            </div>
+            <AccesoCuenta
+              cargandoSesion={cargandoSesion}
+              onSesionChange={setUsuario}
+              usuario={usuario}
+            />
           </div>
         </section>
   </>

@@ -106,6 +106,22 @@ El sistema permite crear pedidos reales desde el frontend solicitando:
 
 El frontend envía el pedido al backend mediante API.
 
+### Cuentas y acceso web
+
+El frontend dispone de un flujo real de autenticación basado en sesiones Django:
+
+- Inicio y cierre de sesión con protección CSRF.
+- Recuperación de la sesión al recargar la aplicación.
+- Registro mayorista con verificación de correo.
+- Solicitud y confirmación de restablecimiento de contraseña.
+- Identificación visual de clientes, mayoristas, operadores y administradores.
+- Estado de aprobación visible para cuentas mayoristas.
+- Checkout autenticado para asociar el pedido a la cuenta y aplicar beneficios
+  mayoristas aprobados.
+
+El panel operativo propio se construirá sobre estos permisos en un módulo
+separado. Django Admin continúa como respaldo técnico interno.
+
 ### Pedidos
 
 El backend crea:
@@ -205,6 +221,7 @@ El sistema incluye controles básicos de seguridad para uso profesional:
 - El backend no confía en precios enviados desde frontend.
 - Rate limit para creación pública de pedidos.
 - Endpoints administrativos protegidos.
+- Sesiones web con credenciales explícitas, CSRF y CORS limitado por origen.
 - Reportes protegidos para usuarios administradores.
 - Validación defensiva de imágenes.
 - Argon2 como hasher principal de contraseñas Django.
@@ -387,7 +404,7 @@ El sistema cuenta con:
 - Branding visual ESTELART.
 - Validaciones locales completas.
 - Pipeline CI/CD configurado.
-- Autenticación, perfiles e historial de pedidos de clientes.
+- Autenticación backend/frontend, perfiles e historial de pedidos de clientes.
 - Gestión interna de categorías, productos, precios, stock e imágenes.
 - Gestión y aplicación automática de promociones y combos.
 
