@@ -9,9 +9,10 @@ from uuid import uuid4
 from django.db import transaction
 from rest_framework import serializers
 
-from apps.clientes.models import Cliente
+from apps.clientes.models import Cliente, PerfilUsuario
 from apps.pedidos.models import DetallePedido, EventoPedido, Pedido
 from apps.productos.models import Producto
+from apps.promociones.services import LineaPromocion, calcular_mejor_promocion
 
 
 class DetallePedidoSerializer(serializers.ModelSerializer):
@@ -86,6 +87,8 @@ class PedidoSerializer(serializers.ModelSerializer):
             "subtotal",
             "descuento",
             "total",
+            "promocion_aplicada",
+            "promocion_nombre",
             "notas",
             "detalles",
             "eventos",
@@ -117,6 +120,7 @@ class PedidoResumenSerializer(serializers.ModelSerializer):
             "estado_pago",
             "canal_venta",
             "total",
+            "promocion_nombre",
             "cantidad_items",
             "cantidad_unidades",
             "creado_en",
@@ -217,7 +221,7 @@ class PedidoPublicoCreateSerializer(serializers.Serializer):
         whatsapp = validated_data["whatsapp"].strip()
         notas = validated_data.get("notas", "").strip()
 
-        cliente, _created = Cliente.objects.update_or_create(
+        cliente = self._obtener_cliente(
             email=email,
             defaults={
                 "nombre": nombre_completo,
@@ -243,6 +247,7 @@ class PedidoPublicoCreateSerializer(serializers.Serializer):
         )
 
         subtotal = Decimal("0.00")
+        lineas_promocion: list[LineaPromocion] = []
 
         for item in items:
             producto = productos[item["producto_id"]]
@@ -250,6 +255,13 @@ class PedidoPublicoCreateSerializer(serializers.Serializer):
             precio_unitario = producto.precio_minorista
             subtotal_item = precio_unitario * cantidad
             subtotal += subtotal_item
+            lineas_promocion.append(
+                LineaPromocion(
+                    producto=producto,
+                    cantidad=cantidad,
+                    precio_unitario=precio_unitario,
+                ),
+            )
 
             DetallePedido.objects.create(
                 pedido=pedido,
@@ -259,19 +271,65 @@ class PedidoPublicoCreateSerializer(serializers.Serializer):
                 subtotal=subtotal_item,
             )
 
+        resultado_promocion = calcular_mejor_promocion(
+            lineas=lineas_promocion,
+            subtotal=subtotal,
+            canal_venta=pedido.canal_venta,
+            mayorista_aprobado=self._es_mayorista_aprobado(cliente),
+        )
         pedido.subtotal = subtotal
-        pedido.descuento = Decimal("0.00")
+        if resultado_promocion is None:
+            pedido.descuento = Decimal("0.00")
+        else:
+            pedido.descuento = resultado_promocion.descuento
+            pedido.promocion_aplicada = resultado_promocion.promocion
+            pedido.promocion_nombre = resultado_promocion.promocion.nombre
         pedido.total = pedido.calcular_total()
         pedido.save(
             update_fields=[
                 "subtotal",
                 "descuento",
                 "total",
+                "promocion_aplicada",
+                "promocion_nombre",
                 "actualizado_en",
             ],
         )
 
         return pedido
+
+    def _obtener_cliente(
+        self,
+        *,
+        email: str,
+        defaults: dict[str, Any],
+    ) -> Cliente:
+        """Reutiliza fichas sin permitir que un checkout anonimo las sobrescriba."""
+        request = self.context.get("request")
+        perfil = getattr(getattr(request, "user", None), "perfil_estelart", None)
+        if perfil is not None and perfil.cliente_id is not None:
+            cliente = perfil.cliente
+            if cliente.email and cliente.email.lower() != email:
+                raise serializers.ValidationError(
+                    {"email": "El correo debe coincidir con la cuenta autenticada."},
+                )
+            return cliente
+
+        cliente = Cliente.objects.filter(email__iexact=email).first()
+        if cliente is not None:
+            return cliente
+        return Cliente.objects.create(email=email, **defaults)
+
+    def _es_mayorista_aprobado(self, cliente: Cliente) -> bool:
+        """Evita conceder beneficios mayoristas solo por conocer un email."""
+        request = self.context.get("request")
+        perfil = getattr(getattr(request, "user", None), "perfil_estelart", None)
+        return bool(
+            perfil
+            and perfil.cliente_id == cliente.pk
+            and perfil.rol == PerfilUsuario.Rol.CLIENTE_MAYORISTA
+            and perfil.mayorista_aprobado
+        )
 
     def _generar_codigo_pedido(self) -> str:
         """Genera un codigo corto de pedido."""
@@ -298,6 +356,7 @@ class PedidoPublicoResponseSerializer(serializers.ModelSerializer):
             "subtotal",
             "descuento",
             "total",
+            "promocion_nombre",
             "creado_en",
         )
 
@@ -337,6 +396,7 @@ class PedidoClienteSerializer(serializers.ModelSerializer):
             "subtotal",
             "descuento",
             "total",
+            "promocion_nombre",
             "notas",
             "detalles",
             "creado_en",

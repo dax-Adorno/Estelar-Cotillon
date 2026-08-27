@@ -2,7 +2,14 @@
 
 from django.contrib import admin
 
-from apps.promociones.models import Promocion
+from apps.promociones.models import ItemComboPromocion, Promocion
+
+
+class ItemComboPromocionInline(admin.TabularInline):
+    """Productos y cantidades requeridos para combos."""
+
+    model = ItemComboPromocion
+    extra = 1
 
 
 @admin.register(Promocion)
@@ -32,3 +39,4 @@ class PromocionAdmin(admin.ModelAdmin):
         "productos",
         "categorias",
     )
+    inlines = (ItemComboPromocionInline,)

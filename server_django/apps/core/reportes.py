@@ -4,6 +4,7 @@ from decimal import Decimal
 from typing import Any
 
 from django.db.models import Count, Sum
+from django.utils import timezone
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -34,6 +35,7 @@ def _entero(valor: Any) -> int:
 
 def _metricas_generales() -> dict[str, Any]:
     """Construye metricas generales del negocio."""
+    ahora = timezone.now()
     total_estimado = Pedido.objects.aggregate(
         total=Sum("total"),
     )["total"]
@@ -55,7 +57,11 @@ def _metricas_generales() -> dict[str, Any]:
             stock__lte=STOCK_BAJO_UMBRAL,
         ).count(),
         "categorias_activas": Categoria.objects.filter(activa=True).count(),
-        "promociones_activas": Promocion.objects.filter(activa=True).count(),
+        "promociones_activas": Promocion.objects.filter(
+            activa=True,
+            fecha_inicio__lte=ahora,
+            fecha_fin__gte=ahora,
+        ).count(),
     }
 
 

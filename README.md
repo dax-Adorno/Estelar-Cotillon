@@ -69,6 +69,20 @@ El catálogo permite:
 
 Esto facilita el uso comercial diario y mejora la experiencia de compra.
 
+### Promociones y combos
+
+El backend administra promociones por porcentaje, monto fijo, temporada,
+mayorista, combo y envío gratis. Cada beneficio puede limitarse por productos,
+categorías, compra mínima, canal y período de vigencia.
+
+- `GET /api/v1/promociones/` publica únicamente promociones vigentes.
+- `GET|POST|PATCH /api/v1/gestion/promociones/` permite la gestión interna.
+- Los combos guardan cada producto y su cantidad requerida.
+- El checkout calcula los descuentos usando precios registrados en el backend.
+- Si coinciden varias promociones, se aplica solamente la de mayor beneficio.
+- Los beneficios mayoristas exigen una cuenta autenticada y aprobada.
+- El pedido conserva la promoción aplicada y una copia de su nombre.
+
 ### Carrito
 
 El usuario puede:
@@ -375,6 +389,7 @@ El sistema cuenta con:
 - Pipeline CI/CD configurado.
 - Autenticación, perfiles e historial de pedidos de clientes.
 - Gestión interna de categorías, productos, precios, stock e imágenes.
+- Gestión y aplicación automática de promociones y combos.
 
 ## Próximas mejoras posibles
 

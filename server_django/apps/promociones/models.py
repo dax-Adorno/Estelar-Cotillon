@@ -4,6 +4,7 @@
 
 from decimal import Decimal
 
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
@@ -98,6 +99,26 @@ class Promocion(models.Model):
             models.Index(fields=["activa"]),
             models.Index(fields=["fecha_inicio", "fecha_fin"]),
         ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(fecha_fin__gt=models.F("fecha_inicio")),
+                name="promocion_fecha_valida",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(porcentaje_descuento__isnull=True)
+                    | models.Q(porcentaje_descuento__gt=0)
+                ),
+                name="promocion_porcentaje_positivo",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(monto_descuento__isnull=True)
+                    | models.Q(monto_descuento__gt=0)
+                ),
+                name="promocion_monto_positivo",
+            ),
+        ]
 
     def __str__(self) -> str:
         return self.nombre
@@ -108,3 +129,69 @@ class Promocion(models.Model):
         ahora = timezone.now()
 
         return self.activa and self.fecha_inicio <= ahora <= self.fecha_fin
+
+    def clean(self) -> None:
+        """Valida coherencia basica tambien fuera de la API."""
+        super().clean()
+        errores: dict[str, str] = {}
+        if self.fecha_inicio and self.fecha_fin and self.fecha_fin <= self.fecha_inicio:
+            errores["fecha_fin"] = "La fecha final debe ser posterior al inicio."
+        if self.tipo_promocion == self.TipoPromocion.ENVIO_GRATIS:
+            if (
+                self.porcentaje_descuento is not None
+                or self.monto_descuento is not None
+            ):
+                errores["tipo_promocion"] = (
+                    "El envio gratis no debe definir descuento monetario."
+                )
+        elif (self.porcentaje_descuento is None) == (self.monto_descuento is None):
+            errores["porcentaje_descuento"] = (
+                "Defina exactamente un porcentaje o un monto de descuento."
+            )
+        elif (
+            self.tipo_promocion == self.TipoPromocion.PORCENTAJE
+            and self.porcentaje_descuento is None
+        ):
+            errores["porcentaje_descuento"] = "Esta promocion requiere un porcentaje."
+        elif (
+            self.tipo_promocion == self.TipoPromocion.MONTO_FIJO
+            and self.monto_descuento is None
+        ):
+            errores["monto_descuento"] = "Esta promocion requiere un monto fijo."
+        if errores:
+            raise ValidationError(errores)
+
+
+class ItemComboPromocion(models.Model):
+    """Producto y cantidad requeridos para activar un combo."""
+
+    promocion = models.ForeignKey(
+        Promocion,
+        on_delete=models.CASCADE,
+        related_name="items_combo",
+    )
+    producto = models.ForeignKey(
+        "productos.Producto",
+        on_delete=models.PROTECT,
+        related_name="items_combo_promocion",
+    )
+    cantidad = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        db_table = "items_combo_promocion"
+        ordering = ["id"]
+        verbose_name = "item de combo"
+        verbose_name_plural = "items de combo"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["promocion", "producto"],
+                name="combo_producto_unico",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["promocion"]),
+            models.Index(fields=["producto"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.promocion.nombre}: {self.cantidad} x {self.producto.sku}"
