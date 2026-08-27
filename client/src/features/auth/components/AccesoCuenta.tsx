@@ -164,9 +164,17 @@ export function AccesoCuenta({
         </div>
         <p className="mt-5 rounded-2xl bg-[#FFEEDC] p-4 text-sm text-[#3B3B3B]/75">
           {esInterno
-            ? "Tu cuenta tiene acceso interno. El siguiente módulo habilitará el panel operativo sobre estos permisos."
+            ? "Tu cuenta tiene acceso interno al panel operativo y sus métricas comerciales."
             : "Ya puedes comprar con una identidad verificada y consultar tus pedidos desde tu cuenta."}
         </p>
+        {esInterno && (
+          <a
+            className="mt-5 inline-flex rounded-xl bg-[#1D883F] px-5 py-3 text-sm font-black text-white transition hover:bg-[#FF6515]"
+            href="/panel"
+          >
+            Abrir panel operativo
+          </a>
+        )}
         {error && (
           <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700" role="alert">
             {error}

@@ -181,6 +181,21 @@ El sistema incluye un endpoint interno protegido con métricas básicas:
 - Top productos pedidos.
 - Productos con stock bajo.
 
+### Dashboard operativo web
+
+Los operadores y administradores pueden abrir `/panel` desde su cuenta. La
+pantalla valida la sesión y el rol antes de consultar la API interna y presenta:
+
+- Indicadores principales de pedidos, venta estimada, promociones y stock.
+- Volumen acumulado de pedidos, unidades, productos y categorías.
+- Distribución de pedidos por estado y canal.
+- Ranking de productos por unidades e importe.
+- Alertas accionables de reposición de stock.
+- Fecha de generación y definiciones básicas para interpretar las métricas.
+
+El total mostrado es una estimación basada en pedidos registrados; no debe
+interpretarse como ingreso cobrado sin considerar el estado de pago.
+
 ### Imágenes de producto
 
 El sistema permite administrar imágenes de producto con:
@@ -405,6 +420,7 @@ El sistema cuenta con:
 - Validaciones locales completas.
 - Pipeline CI/CD configurado.
 - Autenticación backend/frontend, perfiles e historial de pedidos de clientes.
+- Dashboard operativo web protegido por rol.
 - Gestión interna de categorías, productos, precios, stock e imágenes.
 - Gestión y aplicación automática de promociones y combos.
 

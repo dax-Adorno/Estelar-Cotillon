@@ -153,6 +153,8 @@ class ResumenComercialAPIView(APIView):
         """Devuelve metricas basicas del negocio."""
         return Response(
             {
+                "generado_en": timezone.now().isoformat(),
+                "stock_bajo_umbral": STOCK_BAJO_UMBRAL,
                 "metricas": _metricas_generales(),
                 "pedidos_por_estado": _pedidos_por_estado(),
                 "pedidos_por_canal": _pedidos_por_canal(),
