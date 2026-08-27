@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from apps.clientes.models import Cliente
+from apps.clientes.models import Cliente, PerfilUsuario
 from apps.pedidos.models import DetallePedido, Pedido
 from apps.productos.models import Categoria, Producto
 
@@ -87,13 +87,36 @@ def fixture_pedido_reportado() -> Pedido:
 
 
 @pytest.mark.django_db
-def test_resumen_comercial_requiere_admin(
+def test_resumen_comercial_requiere_acceso_interno(
     api_client: APIClient,
 ) -> None:
     """Debe rechazar usuarios no autenticados."""
     response = api_client.get("/api/v1/reportes/resumen-comercial/")
 
     assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.django_db
+def test_resumen_comercial_permite_operador(
+    api_client: APIClient,
+) -> None:
+    """Debe permitir consultar métricas a un operador autenticado."""
+    usuario_modelo = get_user_model()
+    operador = usuario_modelo.objects.create_user(
+        username="operador_reportes",
+        email="operador.reportes@example.com",
+        password="test-password",
+    )
+    PerfilUsuario.objects.create(
+        usuario=operador,
+        rol=PerfilUsuario.Rol.OPERADOR,
+    )
+    api_client.force_authenticate(user=operador)
+
+    response = api_client.get("/api/v1/reportes/resumen-comercial/")
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()["metricas"]["pedidos_total"] == 0
 
 
 @pytest.mark.django_db
@@ -111,6 +134,8 @@ def test_resumen_comercial_devuelve_metricas_basicas(
 
     data = response.json()
 
+    assert data["generado_en"]
+    assert data["stock_bajo_umbral"] == 10
     assert data["metricas"]["pedidos_total"] == 1
     assert data["metricas"]["pedidos_pendientes"] == 1
     assert data["metricas"]["total_estimado"] == "3000.00"
