@@ -30,6 +30,7 @@ export interface PedidoPublicoResponse {
   subtotal: string;
   descuento: string;
   total: string;
+  promocion_nombre: string;
   creado_en: string;
 }
 

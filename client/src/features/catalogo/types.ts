@@ -44,6 +44,15 @@ export interface Promocion {
   monto_descuento: string | null;
   compra_minima: string | null;
   canal_venta: string;
+  productos: number[];
+  categorias: number[];
+  items_combo: Array<{
+    id: number;
+    producto: number;
+    producto_nombre: string;
+    producto_sku: string;
+    cantidad: number;
+  }>;
   activa: boolean;
   vigente: boolean;
 }

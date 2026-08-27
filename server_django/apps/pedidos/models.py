@@ -75,6 +75,14 @@ class Pedido(models.Model):
         default=Decimal("0.00"),
     )
     notas = models.TextField(blank=True)
+    promocion_aplicada = models.ForeignKey(
+        "promociones.Promocion",
+        on_delete=models.PROTECT,
+        related_name="pedidos",
+        null=True,
+        blank=True,
+    )
+    promocion_nombre = models.CharField(max_length=160, blank=True)
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
 

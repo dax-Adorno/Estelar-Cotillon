@@ -176,6 +176,12 @@ export function CheckoutPedido({
           <p className="font-black">Pedido creado correctamente.</p>
           <p className="mt-1 text-sm">Código: {pedidoCreado.codigo}</p>
           <p className="text-sm">Cliente: {pedidoCreado.cliente_nombre}</p>
+          {pedidoCreado.promocion_nombre && (
+            <p className="text-sm">
+              Promoción: {pedidoCreado.promocion_nombre} (-
+              {formatearPrecio(Number(pedidoCreado.descuento))})
+            </p>
+          )}
           <p className="text-sm">
             Total: {formatearPrecio(Number(pedidoCreado.total))}
           </p>

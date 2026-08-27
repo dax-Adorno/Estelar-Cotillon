@@ -91,6 +91,7 @@ class PedidoAdmin(admin.ModelAdmin):
         "canal_venta",
         "cantidad_items",
         "cantidad_unidades",
+        "promocion_nombre",
         "total",
         "creado_en",
     )
@@ -112,6 +113,8 @@ class PedidoAdmin(admin.ModelAdmin):
         "codigo",
         "estado",
         "estado_pago",
+        "promocion_aplicada",
+        "promocion_nombre",
         "subtotal",
         "descuento",
         "total",
@@ -135,6 +138,8 @@ class PedidoAdmin(admin.ModelAdmin):
             "Importes",
             {
                 "fields": (
+                    "promocion_aplicada",
+                    "promocion_nombre",
                     "subtotal",
                     "descuento",
                     "total",

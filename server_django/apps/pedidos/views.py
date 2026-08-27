@@ -233,7 +233,10 @@ class PedidoPublicoCreateAPIView(APIView):
 
     def post(self, request: Request) -> Response:
         """Crea un pedido a partir del carrito del frontend."""
-        serializer = PedidoPublicoCreateSerializer(data=request.data)
+        serializer = PedidoPublicoCreateSerializer(
+            data=request.data,
+            context={"request": request},
+        )
         serializer.is_valid(raise_exception=True)
 
         pedido = serializer.save()

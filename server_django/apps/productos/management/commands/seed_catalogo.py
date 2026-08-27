@@ -10,7 +10,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from apps.productos.models import Categoria, Producto
-from apps.promociones.models import Promocion
+from apps.promociones.models import ItemComboPromocion, Promocion
 
 
 class CategoriaSeed(TypedDict):
@@ -252,6 +252,12 @@ class Command(BaseCommand):
         )
         combo_slime.productos.set([productos["SLI-001"]])
         combo_slime.categorias.set([categorias["slime-y-gel"]])
+        ItemComboPromocion.objects.update_or_create(
+            promocion=combo_slime,
+            producto=productos["SLI-001"],
+            defaults={"cantidad": 2},
+        )
+        combo_slime.items_combo.exclude(producto=productos["SLI-001"]).delete()
 
         promo_instagram, _created = Promocion.objects.update_or_create(
             slug="promo-instagram-glitter",
