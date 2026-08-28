@@ -426,9 +426,10 @@ docker compose --env-file .env.production -f docker-compose.prod.yml ps
 docker compose --env-file .env.production -f docker-compose.prod.yml logs --tail 100
 ```
 
-Los archivos multimedia continúan en un volumen Docker. Antes de escalar a
-múltiples instancias se debe migrar ese almacenamiento a un servicio compatible
-con S3 y configurar copias de seguridad de PostgreSQL.
+La ruta `/api/v1/health/ready/` confirma además que PostgreSQL está disponible.
+La guía de [operación, respaldos y actualización](docs/DESPLIEGUE.md) contiene
+el procedimiento completo y el límite que exige storage S3 antes de escalar a
+múltiples instancias.
 ## Estado actual del sistema
 
 El sistema cuenta con:

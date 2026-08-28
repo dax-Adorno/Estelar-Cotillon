@@ -13,6 +13,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 30s
 
   django_api:
     build:
@@ -35,6 +39,7 @@ services:
       DJANGO_SECURE_SSL_REDIRECT: ${DJANGO_SECURE_SSL_REDIRECT:-True}
       DJANGO_SESSION_COOKIE_SECURE: ${DJANGO_SESSION_COOKIE_SECURE:-True}
       DJANGO_CSRF_COOKIE_SECURE: ${DJANGO_CSRF_COOKIE_SECURE:-True}
+      DJANGO_CSRF_COOKIE_HTTPONLY: ${DJANGO_CSRF_COOKIE_HTTPONLY:-True}
       DJANGO_SECURE_HSTS_SECONDS: ${DJANGO_SECURE_HSTS_SECONDS:-31536000}
       DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS: ${DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS:-True}
       DJANGO_SECURE_HSTS_PRELOAD: ${DJANGO_SECURE_HSTS_PRELOAD:-True}
@@ -44,12 +49,30 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_HOST: db
       POSTGRES_PORT: "5432"
+      POSTGRES_CONN_MAX_AGE: ${POSTGRES_CONN_MAX_AGE:-60}
+      DJANGO_LOG_LEVEL: ${DJANGO_LOG_LEVEL:-INFO}
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-3}
+      GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-60}
     volumes:
       - estelart_media:/app/media
       - estelart_static:/app/staticfiles
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - 'import os, urllib.request; host = os.environ["DJANGO_ALLOWED_HOSTS"].split(",")[0]; request = urllib.request.Request("http://127.0.0.1:8000/api/v1/health/ready/", headers={"Host": host, "X-Forwarded-Proto": "https"}); urllib.request.urlopen(request, timeout=5)'
+      interval: 15s
+      timeout: 6s
+      retries: 5
+      start_period: 30s
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 30s
 
   client:
     build:
@@ -59,8 +82,20 @@ services:
       - "${APP_PORT:-8080}:80"
     volumes:
       - estelart_static:/var/www/static:ro
+      - estelart_media:/var/www/media:ro
     depends_on:
-      - django_api
+      django_api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 15s
 
 volumes:
   estelart_postgres_data:

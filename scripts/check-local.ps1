@@ -78,5 +78,11 @@ Run-Step "Docker Compose - Config" {
     Pop-Location
 }
 
+Run-Step "Docker Compose - Produccion" {
+    Push-Location $ROOT_DIR
+    docker compose --env-file .env.production.example -f docker-compose.prod.yml config --quiet
+    Pop-Location
+}
+
 Write-Host ""
 Write-Host "Todas las validaciones locales pasaron correctamente." -ForegroundColor Green
