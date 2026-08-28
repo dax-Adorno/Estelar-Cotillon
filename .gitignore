@@ -42,3 +42,5 @@ docker-data/
 .idea/
 .DS_Store
 Thumbs.db
+.env.production
+backups/
