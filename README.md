@@ -226,6 +226,13 @@ reglas minorista/mayorista. Productos y categorías se desactivan mediante
 `PATCH` para preservar el historial comercial; las imágenes sí se pueden
 eliminar junto con sus archivos derivados.
 
+La interfaz protegida `/panel/catalogo` permite realizar estas tareas sin usar
+el administrador de Django: crear y editar categorías o productos, filtrar el
+inventario, actualizar precios y stock, publicar u ocultar artículos, marcar
+destacados y gestionar la galería completa de cada producto. Las imágenes se
+envían como `multipart/form-data` y admiten texto alternativo, visibilidad e
+imagen principal.
+
 ## Seguridad aplicada
 
 El sistema incluye controles básicos de seguridad para uso profesional:
@@ -428,7 +435,7 @@ El sistema cuenta con:
 
 - Integración con WhatsApp.
 - Exportación de pedidos a Excel.
-- Dashboard visual de reportes.
+- Gestión visual del flujo de pedidos.
 - Segmentación de clientes.
 - Descuentos automáticos por volumen.
 - Integración con medios de pago.

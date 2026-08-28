@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 
 import App from "./App.tsx";
 import { AuthCallback } from "./features/auth/components/AuthCallback.tsx";
+import { GestionCatalogo } from "./features/gestionCatalogo/components/GestionCatalogo.tsx";
 import { PanelOperativo } from "./features/reportes/components/PanelOperativo.tsx";
 import "./index.css";
 
@@ -11,11 +12,14 @@ const esRutaAutenticacion = [
   "/restablecer-password",
 ].some((path) => window.location.pathname.endsWith(path));
 const esPanelOperativo = window.location.pathname.endsWith("/panel");
+const esGestionCatalogo = window.location.pathname.endsWith("/panel/catalogo");
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     {esRutaAutenticacion ? (
       <AuthCallback />
+    ) : esGestionCatalogo ? (
+      <GestionCatalogo />
     ) : esPanelOperativo ? (
       <PanelOperativo />
     ) : (
