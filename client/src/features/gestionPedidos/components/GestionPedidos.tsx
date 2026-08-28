@@ -29,12 +29,13 @@ function MensajeAcceso({ children, titulo }: { children: React.ReactNode; titulo
 }
 
 export function GestionPedidos() {
+  const busquedaInicial = new URLSearchParams(window.location.search).get("search") ?? "";
   const [usuario, setUsuario] = useState<UsuarioActual | null>(null);
   const [pedidos, setPedidos] = useState<PedidoResumen[]>([]);
   const [total, setTotal] = useState(0);
   const [pagina, setPagina] = useState(1);
   const [detalle, setDetalle] = useState<PedidoDetalle | null>(null);
-  const [busqueda, setBusqueda] = useState("");
+  const [busqueda, setBusqueda] = useState(busquedaInicial);
   const [estado, setEstado] = useState<EstadoPedido | "">("");
   const [estadoPago, setEstadoPago] = useState<EstadoPago | "">("");
   const [canal, setCanal] = useState<CanalVenta | "">("");
@@ -72,7 +73,7 @@ export function GestionPedidos() {
         if (!activo) return;
         setUsuario(sesion);
         if (sesion && ["operador", "admin"].includes(sesion.rol)) {
-          const resultado = await listarPedidos({ ordering: "-creado_en", page: 1 });
+          const resultado = await listarPedidos({ search: busquedaInicial || undefined, ordering: "-creado_en", page: 1 });
           if (activo) { setPedidos(resultado.results); setTotal(resultado.count); }
         }
       } catch (unknownError) {
@@ -83,7 +84,7 @@ export function GestionPedidos() {
     }
     void iniciar();
     return () => { activo = false; };
-  }, []);
+  }, [busquedaInicial]);
 
   async function aplicarFiltros(nuevaPagina = 1) {
     setCargando(true);
@@ -130,7 +131,7 @@ export function GestionPedidos() {
 
   return (
     <main className="min-h-screen bg-[#F8F1E8] text-[#3B3B3B]">
-      <header className="border-b border-[#3B3B3B]/10 bg-white"><div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4"><div className="flex items-center gap-4"><img alt="ESTELART" className="h-11 w-auto" src="/brand/estelart-logo.svg" /><div><p className="text-xs font-black uppercase tracking-wider text-[#C41D85]">Operaciones</p><p className="font-black">Gestión de pedidos</p></div></div><nav aria-label="Navegación operativa" className="flex flex-wrap items-center gap-2 text-sm font-black"><a className="rounded-xl px-4 py-2 hover:bg-[#FFEEDC]" href="/panel">Resumen</a><a className="rounded-xl bg-[#FFEEDC] px-4 py-2" href="/panel/pedidos" aria-current="page">Pedidos</a><a className="rounded-xl px-4 py-2 hover:bg-[#FFEEDC]" href="/panel/catalogo">Catálogo</a><a className="rounded-xl px-4 py-2 hover:bg-[#FFEEDC]" href="/">Ver tienda</a><button className="rounded-xl border border-[#3B3B3B]/15 px-4 py-2 hover:bg-[#FFEEDC]" onClick={() => void salir()} type="button">Cerrar sesión</button></nav></div></header>
+      <header className="border-b border-[#3B3B3B]/10 bg-white"><div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4"><div className="flex items-center gap-4"><img alt="ESTELART" className="h-11 w-auto" src="/brand/estelart-logo.svg" /><div><p className="text-xs font-black uppercase tracking-wider text-[#C41D85]">Operaciones</p><p className="font-black">Gestión de pedidos</p></div></div><nav aria-label="Navegación operativa" className="flex flex-wrap items-center gap-2 text-sm font-black"><a className="rounded-xl px-4 py-2 hover:bg-[#FFEEDC]" href="/panel">Resumen</a><a className="rounded-xl bg-[#FFEEDC] px-4 py-2" href="/panel/pedidos" aria-current="page">Pedidos</a><a className="rounded-xl px-4 py-2 hover:bg-[#FFEEDC]" href="/panel/catalogo">Catálogo</a><a className="rounded-xl px-4 py-2 hover:bg-[#FFEEDC]" href="/panel/clientes">Clientes</a><a className="rounded-xl px-4 py-2 hover:bg-[#FFEEDC]" href="/">Ver tienda</a><button className="rounded-xl border border-[#3B3B3B]/15 px-4 py-2 hover:bg-[#FFEEDC]" onClick={() => void salir()} type="button">Cerrar sesión</button></nav></div></header>
 
       <div className="mx-auto max-w-7xl px-6 py-8">
         <div><p className="text-sm font-black uppercase tracking-wider text-[#1D883F]">Seguimiento comercial</p><h1 className="mt-2 text-4xl font-black tracking-tight">Pedidos y cobros</h1><p className="mt-3 max-w-2xl text-[#3B3B3B]/65">Consulta cada venta, controla su preparación, registra cobros y conserva un historial auditable.</p></div>
