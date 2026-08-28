@@ -2,6 +2,7 @@
 
 # pylint: disable=too-many-ancestors
 
+from decimal import Decimal
 from typing import Any
 
 from django.conf import settings
@@ -10,6 +11,8 @@ from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
 from django.core import exceptions as django_exceptions
 from django.core.mail import send_mail
+from django.db.models import Count, DecimalField, Max, Q, QuerySet, Sum, Value
+from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
 from django.utils.decorators import method_decorator
@@ -17,7 +20,8 @@ from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 from django.views.decorators.http import require_GET
-from rest_framework import permissions, status, viewsets
+from rest_framework import filters, permissions, serializers, status, viewsets
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -46,12 +50,90 @@ from apps.core.throttles import (
 UserModel = get_user_model()
 
 
+class PaginacionClientes(PageNumberPagination):
+    """Paginacion acotada para la cartera comercial."""
+
+    page_size = 25
+    page_size_query_param = "page_size"
+    max_page_size = 100
+
+
 class ClienteViewSet(viewsets.ReadOnlyModelViewSet):
-    """API de lectura para clientes activos."""
+    """Cartera activa con búsqueda, segmentación y métricas comerciales."""
 
     serializer_class = ClienteSerializer
     permission_classes = (EsOperadorOAdmin,)
-    queryset = Cliente.objects.filter(activo=True)
+    pagination_class = PaginacionClientes
+    filter_backends = (filters.SearchFilter, filters.OrderingFilter)
+    search_fields = (
+        "nombre",
+        "apellido",
+        "razon_social",
+        "email",
+        "whatsapp",
+        "cuit",
+    )
+    ordering_fields = (
+        "nombre",
+        "creado_en",
+        "ultimo_pedido_en",
+        "pedidos_total",
+        "total_comprado",
+    )
+    ordering = ("nombre", "apellido")
+
+    def get_queryset(self) -> QuerySet[Cliente]:
+        queryset = (
+            Cliente.objects.filter(activo=True)
+            .select_related("perfil_usuario")
+            .annotate(
+                pedidos_total=Count(
+                    "pedidos",
+                    filter=~Q(pedidos__estado="cancelado"),
+                    distinct=True,
+                ),
+                total_comprado=Coalesce(
+                    Sum(
+                        "pedidos__total",
+                        filter=~Q(pedidos__estado="cancelado"),
+                    ),
+                    Value(Decimal("0.00")),
+                    output_field=DecimalField(max_digits=14, decimal_places=2),
+                ),
+                ultimo_pedido_en=Max("pedidos__creado_en"),
+            )
+        )
+        tipo_cliente = self.request.query_params.get("tipo_cliente")
+        if tipo_cliente is not None:
+            permitidos = set(Cliente.TipoCliente.values)
+            if tipo_cliente not in permitidos:
+                raise serializers.ValidationError(
+                    {"tipo_cliente": "El tipo de cliente no es valido."},
+                )
+            queryset = queryset.filter(tipo_cliente=tipo_cliente)
+
+        cuenta = self.request.query_params.get("cuenta")
+        filtros_cuenta = {
+            "sin_cuenta": Q(perfil_usuario__isnull=True),
+            "minorista": Q(perfil_usuario__rol=PerfilUsuario.Rol.CLIENTE_MINORISTA),
+            "mayorista_pendiente": Q(
+                perfil_usuario__rol=PerfilUsuario.Rol.CLIENTE_MAYORISTA,
+                perfil_usuario__mayorista_aprobado=False,
+            ),
+            "mayorista_aprobado": Q(
+                perfil_usuario__rol=PerfilUsuario.Rol.CLIENTE_MAYORISTA,
+                perfil_usuario__mayorista_aprobado=True,
+            ),
+            "operador": Q(perfil_usuario__rol=PerfilUsuario.Rol.OPERADOR),
+            "admin": Q(perfil_usuario__rol=PerfilUsuario.Rol.ADMIN),
+        }
+        if cuenta is not None:
+            if cuenta not in filtros_cuenta:
+                raise serializers.ValidationError(
+                    {"cuenta": "El estado de cuenta no es valido."},
+                )
+            queryset = queryset.filter(filtros_cuenta[cuenta])
+        return queryset
 
 
 class PerfilUsuarioViewSet(viewsets.ModelViewSet):

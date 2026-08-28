@@ -119,8 +119,21 @@ El frontend dispone de un flujo real de autenticación basado en sesiones Django
 - Checkout autenticado para asociar el pedido a la cuenta y aplicar beneficios
   mayoristas aprobados.
 
-El panel operativo propio se construirá sobre estos permisos en un módulo
-separado. Django Admin continúa como respaldo técnico interno.
+El panel operativo web utiliza estos permisos para separar consultas internas
+de acciones administrativas. Django Admin continúa como respaldo técnico.
+
+### Gestión comercial de clientes
+
+La ruta protegida `/panel/clientes` presenta una cartera paginada y permite
+buscar por cliente, empresa, email, WhatsApp o CUIT; segmentar por tipo y estado
+de cuenta; ordenar por registro, última compra, pedidos o facturación; y revisar
+contacto, ubicación e historial comercial. Operadores acceden en modo consulta.
+Los administradores también pueden cambiar roles y aprobar o suspender cuentas
+mayoristas mediante validaciones adicionales del backend.
+
+Las métricas de cliente excluyen pedidos cancelados del conteo y total comprado.
+El endpoint conserva un máximo de 100 resultados por página para evitar cargas
+sin límite a medida que crece la cartera.
 
 ### Pedidos
 
@@ -441,8 +454,7 @@ El sistema cuenta con:
 
 - Integración con WhatsApp.
 - Exportación de pedidos a Excel.
-- Gestión visual de clientes y cuentas mayoristas.
-- Segmentación de clientes.
+- Segmentación avanzada de clientes y campañas.
 - Descuentos automáticos por volumen.
 - Integración con medios de pago.
 - Publicación o sincronización con canales externos.

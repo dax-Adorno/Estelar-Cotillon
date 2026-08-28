@@ -159,6 +159,7 @@ export function GestionCatalogo() {
             <a className="rounded-xl px-4 py-2 hover:bg-[#FFEEDC]" href="/panel">Resumen</a>
             <a className="rounded-xl px-4 py-2 hover:bg-[#FFEEDC]" href="/panel/pedidos">Pedidos</a>
             <a aria-current="page" className="rounded-xl bg-[#FFEEDC] px-4 py-2" href="/panel/catalogo">Catálogo</a>
+            <a className="rounded-xl px-4 py-2 hover:bg-[#FFEEDC]" href="/panel/clientes">Clientes</a>
             <a className="rounded-xl px-4 py-2 hover:bg-[#FFEEDC]" href="/">Ver tienda</a>
             <button className="rounded-xl border border-[#3B3B3B]/15 px-4 py-2 hover:bg-[#FFEEDC]" onClick={() => void salir()} type="button">Cerrar sesión</button>
           </nav>

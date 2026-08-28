@@ -18,6 +18,17 @@ UserModel = get_user_model()
 class ClienteSerializer(serializers.ModelSerializer):
     """Serializer para clientes."""
 
+    pedidos_total = serializers.IntegerField(read_only=True)
+    total_comprado = serializers.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        read_only=True,
+    )
+    ultimo_pedido_en = serializers.DateTimeField(read_only=True)
+    perfil_id = serializers.SerializerMethodField()
+    rol = serializers.SerializerMethodField()
+    mayorista_aprobado = serializers.SerializerMethodField()
+
     class Meta:
         model = Cliente
         fields = (
@@ -36,6 +47,12 @@ class ClienteSerializer(serializers.ModelSerializer):
             "provincia",
             "notas",
             "activo",
+            "pedidos_total",
+            "total_comprado",
+            "ultimo_pedido_en",
+            "perfil_id",
+            "rol",
+            "mayorista_aprobado",
             "creado_en",
             "actualizado_en",
         )
@@ -44,6 +61,22 @@ class ClienteSerializer(serializers.ModelSerializer):
             "creado_en",
             "actualizado_en",
         )
+
+    @staticmethod
+    def _perfil(cliente: Cliente) -> PerfilUsuario | None:
+        return getattr(cliente, "perfil_usuario", None)
+
+    def get_perfil_id(self, cliente: Cliente) -> int | None:
+        perfil = self._perfil(cliente)
+        return perfil.pk if perfil is not None else None
+
+    def get_rol(self, cliente: Cliente) -> str | None:
+        perfil = self._perfil(cliente)
+        return perfil.rol if perfil is not None else None
+
+    def get_mayorista_aprobado(self, cliente: Cliente) -> bool:
+        perfil = self._perfil(cliente)
+        return bool(perfil and perfil.mayorista_aprobado)
 
 
 class RegistroUsuarioSerializer(serializers.Serializer):
