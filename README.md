@@ -164,6 +164,12 @@ Los estados no se editan directamente. La API y las acciones masivas de Django
 Admin pasan por el mismo servicio transaccional para evitar sobreventa y cambios
 sin trazabilidad.
 
+La interfaz protegida `/panel/pedidos` lleva este flujo al panel operativo. El
+equipo puede buscar y filtrar pedidos por estado, cobro, canal y fechas; ordenar
+o paginar la bandeja; consultar productos, importes, notas e historial; y aplicar
+únicamente las transiciones válidas. La pantalla exige registrar el reembolso
+antes de ofrecer la cancelación de un pedido cobrado.
+
 ### Reportes comerciales
 
 El sistema incluye un endpoint interno protegido con métricas básicas:
@@ -435,7 +441,7 @@ El sistema cuenta con:
 
 - Integración con WhatsApp.
 - Exportación de pedidos a Excel.
-- Gestión visual del flujo de pedidos.
+- Gestión visual de clientes y cuentas mayoristas.
 - Segmentación de clientes.
 - Descuentos automáticos por volumen.
 - Integración con medios de pago.

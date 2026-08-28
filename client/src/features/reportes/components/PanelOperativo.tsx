@@ -256,6 +256,9 @@ export function PanelOperativo() {
             <a className="rounded-xl bg-[#FFEEDC] px-4 py-2" href="/panel">
               Resumen
             </a>
+            <a className="rounded-xl px-4 py-2 hover:bg-[#FFEEDC]" href="/panel/pedidos">
+              Pedidos
+            </a>
             <a className="rounded-xl px-4 py-2 hover:bg-[#FFEEDC]" href="/panel/catalogo">
               Catálogo
             </a>
