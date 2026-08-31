@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { BrandCursor } from "./components/BrandCursor";
 import { obtenerSesionActual } from "./features/auth/authApi";
 import { AccesoCuenta } from "./features/auth/components/AccesoCuenta";
@@ -31,17 +31,25 @@ function normalizarTexto(valor: string): string {
   return valor.trim().toLowerCase();
 }
 
+function cargarCarritoGuardado(): CarritoItem[] {
+  try {
+    const guardado = window.localStorage.getItem("estelart-carrito");
+    return guardado ? (JSON.parse(guardado) as CarritoItem[]) : [];
+  } catch {
+    return [];
+  }
+}
+
 function App() {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [productos, setProductos] = useState<Producto[]>([]);
   const [promociones, setPromociones] = useState<Promocion[]>([]);
-  const [carritoItems, setCarritoItems] = useState<CarritoItem[]>([]);
+  const [carritoItems, setCarritoItems] = useState<CarritoItem[]>(cargarCarritoGuardado);
   const [pedidoCreado, setPedidoCreado] =
     useState<PedidoPublicoResponse | null>(null);
   const [errorPedido, setErrorPedido] = useState<string | null>(null);
   const [enviandoPedido, setEnviandoPedido] = useState(false);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("todas");
-  const [soloDestacados, setSoloDestacados] = useState(false);
   const [terminoBusqueda, setTerminoBusqueda] = useState("");
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,6 +80,10 @@ function App() {
   }, []);
 
   useEffect(() => {
+    window.localStorage.setItem("estelart-carrito", JSON.stringify(carritoItems));
+  }, [carritoItems]);
+
+  useEffect(() => {
     obtenerSesionActual()
       .then(setUsuario)
       .catch(() => setUsuario(null))
@@ -86,8 +98,6 @@ function App() {
         categoriaSeleccionada === "todas" ||
         producto.categoria === Number(categoriaSeleccionada);
 
-      const coincideDestacado = !soloDestacados || producto.destacado;
-
       const textoProducto = normalizarTexto(
         [
           producto.nombre,
@@ -100,9 +110,9 @@ function App() {
       const coincideBusqueda =
         busqueda.length === 0 || textoProducto.includes(busqueda);
 
-      return coincideCategoria && coincideDestacado && coincideBusqueda;
+      return coincideCategoria && producto.destacado && coincideBusqueda;
     });
-  }, [categoriaSeleccionada, productos, soloDestacados, terminoBusqueda]);
+  }, [categoriaSeleccionada, productos, terminoBusqueda]);
 
   const promocionesVigentes = useMemo(() => {
     return promociones.filter(
@@ -215,82 +225,88 @@ function App() {
     }
   }
 
+  if (window.location.pathname.endsWith("/carrito")) {
+    return (
+      <main className="min-h-screen bg-[#f7f2e9] text-[#20201f]">
+        <header className="border-b border-black/8 bg-white/90 backdrop-blur-xl">
+          <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-5">
+            <a href="/" aria-label="Volver a la tienda"><img alt="ESTELART" className="h-11 w-auto" src="/brand/estelart-logo.svg" /></a>
+            <a className="rounded-full border border-black/15 px-5 py-2.5 text-sm font-bold transition hover:bg-[#35261f] hover:text-white" href="/">← Seguir comprando</a>
+          </div>
+        </header>
+        <section className="mx-auto max-w-6xl px-5 py-10 sm:py-16">
+          <div className="mb-10">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-[#c41d85]">Tu selección</p>
+            <h1 className="mt-3 font-serif text-4xl text-[#35261f] sm:text-6xl">Carrito y pedido</h1>
+            <p className="mt-3 max-w-xl text-black/55">Revisá tus productos y completá los datos para registrar el pedido.</p>
+          </div>
+          <div className="grid gap-7 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+            <CartSummary items={carritoItems} onDisminuirProducto={disminuirProductoCarrito} onIncrementarProducto={incrementarProductoCarrito} onQuitarProducto={quitarProductoCarrito} />
+            <CheckoutPedido enviandoPedido={enviandoPedido} errorPedido={errorPedido} items={carritoItems} onEnviarPedido={enviarPedido} pedidoCreado={pedidoCreado} />
+          </div>
+        </section>
+      </main>
+    );
+  }
+
 return (
-  <main className="min-h-screen bg-[#FFEEDC] px-6 py-8 text-[#3B3B3B]">
-    <BrandCursor/>
-    <section className="mx-auto max-w-7xl">
-      <header className="mb-8 overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-[#FFBA1F]/40">
-        <div className="flex flex-col gap-8 p-6 md:grid md:grid-cols-[1.15fr_0.85fr] md:p-8">
-          <div>
-            <div className="flex flex-wrap items-center gap-4">
-              <img
-                alt="ESTELART"
-                className="h-16 w-auto"
-                src="/brand/estelart-logo.svg"
+  <main className="cosmic-store min-h-screen text-[#20201f]">
+    <BrandCursor />
+    <div className="border-b border-white/10 bg-[#35261f] px-4 py-2.5 text-center text-[11px] font-bold uppercase tracking-[0.16em] text-[#f6efe5]">
+      Envíos a todo el país · Compras minoristas y mayoristas
+    </div>
+    <nav className="cosmic-nav sticky top-0 z-40 px-4">
+      <div className="mx-auto flex h-20 max-w-[1600px] items-center justify-between gap-6">
+        <a aria-label="Ir al inicio" href="#inicio">
+          <img alt="ESTELART" className="nav-logo h-16 w-auto" src="/brand/estelart-logo.svg" />
+        </a>
+        <div className="cosmic-nav-links hidden items-center gap-10 md:flex">
+          <a className="cosmic-nav-link" href="#catalogo">Productos</a>
+          <a className="cosmic-nav-link" href="#promociones">Promociones</a>
+          <a className="cosmic-nav-link" href="#acceso">Mayoristas</a>
+        </div>
+        <a className="cosmic-cart rounded-full px-6 py-3 text-base font-black text-white" href="/carrito">
+          Carrito · {carritoItems.reduce((total, item) => total + item.cantidad, 0)}
+        </a>
+      </div>
+    </nav>
+    <section className="mx-auto max-w-[1600px] px-4 py-6 sm:px-6 sm:py-10" id="inicio">
+      <header className="pixel-hero mb-8 overflow-hidden rounded-[2rem]" aria-label="ESTELART">
+        <div className="pixel-grid" aria-hidden="true" />
+        <div className="pixel-burst" aria-hidden="true">
+          {Array.from({ length: 48 }, (_, index) => {
+            const colors = ["#c41d85", "#ffba1f", "#ff6515", "#1d883f", "#ffffff"];
+            return (
+              <i
+                className="pixel-particle"
+                key={index}
+                style={{
+                  left: `${(index * 37 + 7) % 100}%`,
+                  top: `${(index * 53 + 11) % 100}%`,
+                  animationDelay: `${(index % 12) * -0.23}s`,
+                  animationDuration: `${2.8 + (index % 7) * 0.32}s`,
+                  "--pixel-color": colors[index % colors.length],
+                  "--pixel-size": `${4 + (index % 5) * 3}px`,
+                } as CSSProperties}
               />
-
-              <span className="rounded-full bg-[#FFBA1F]/20 px-4 py-2 text-sm font-bold text-[#3B3B3B]">
-                Plataforma comercial
-              </span>
-            </div>
-
-            <h1 className="mt-8 max-w-4xl text-4xl font-black tracking-tight text-[#3B3B3B] md:text-6xl">
-              Catálogo inteligente para cotillón, insumos creativos y pedidos
-              mayoristas.
-            </h1>
-
-            <p className="mt-6 max-w-3xl text-lg text-[#3B3B3B]/75">
-              ESTELART centraliza productos, precios, stock, promociones,
-              carrito, pedidos y gestión operativa en una sola plataforma para
-              vender con más orden.
-            </p>
-
-            <div className="mt-8 flex flex-wrap gap-3">
-              <a
-                className="rounded-xl bg-[#FF6515] px-5 py-3 font-bold text-white shadow-sm transition hover:opacity-90"
-                href="#catalogo"
-              >
-                Ver catálogo
-              </a>
-
-              <a
-                className="rounded-xl border border-[#C41D85]/30 bg-white px-5 py-3 font-bold text-[#C41D85] transition hover:bg-[#C41D85]/10"
-                href="#checkout"
-              >
-                Crear pedido
-              </a>
-              <a
-                className="rounded-xl border border-[#1D883F]/30 bg-white px-5 py-3 font-bold text-[#1D883F] transition hover:bg-[#1D883F]/10"
-                href="#acceso"
-              >
-                {usuario ? `Hola, ${usuario.nombre || "cuenta"}` : "Ingresar"}
-              </a>
-
-              <a
-                className="rounded-xl bg-[#C41D85] px-5 py-3 font-bold text-white shadow-sm transition hover:opacity-90"
-                href="#acceso"
-              >
-                Registro mayorista
-              </a>
-            </div>
-          </div>
-
-          <div className="relative min-h-72 overflow-hidden rounded-3xl bg-[#FFBA1F]/20">
-            <img
-              alt="Insumos creativos ESTELART"
-              className="h-full min-h-72 w-full object-cover"
-              src="/brand/estelar-imagen.jpeg"
-            />
-
-            <div className="absolute bottom-4 left-4 right-4 rounded-2xl bg-white/90 p-4 shadow-sm backdrop-blur">
-              <p className="text-sm font-bold text-[#1D883F]">
-                Sistema real para gestión comercial
-              </p>
-              <p className="mt-1 text-sm text-[#3B3B3B]/75">
-                Catálogo, carrito, pedidos, panel operativo y reportes.
-              </p>
-            </div>
-          </div>
+            );
+          })}
+        </div>
+        <div className="pixel-orbit pixel-orbit-one" aria-hidden="true" />
+        <div className="pixel-orbit pixel-orbit-two" aria-hidden="true" />
+        <div className="relative z-10 flex min-h-[620px] flex-col items-center justify-center px-6 py-16 text-center">
+          <div className="logo-aura" aria-hidden="true" />
+          <img
+            alt="Logo ESTELART animado"
+            className="hero-logo relative z-10 h-auto w-[min(78vw,620px)]"
+            src="/brand/estelart-logo.svg"
+          />
+          <p className="hero-signature relative z-10 mt-2 text-xs font-black uppercase tracking-[0.32em] text-[#35261f]/60 sm:text-sm">
+            Celebrá · Creá · Sorprendé
+          </p>
+          <a className="hero-scroll relative z-10 mt-12" href="#catalogo" aria-label="Ver productos">
+            <span>Ver productos</span><b aria-hidden="true">↓</b>
+          </a>
         </div>
       </header>
         {cargando && (
@@ -307,7 +323,7 @@ return (
 
         {!cargando && !error && (
           <>
-            <section className="mt-8 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-[#FFBA1F]/40">
+            <section className="mt-8 rounded-xl bg-white p-5 shadow-sm ring-1 ring-[#FFBA1F]/40">
               <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
                 <div>
                   <p className="text-sm font-bold uppercase tracking-wide text-[#C41D85]">
@@ -319,9 +335,8 @@ return (
                 </div>
 
                 <p className="max-w-xl text-sm text-[#3B3B3B]/70">
-                  Estructura pensada para venta real: búsqueda rápida, filtros,
-                  productos visibles, carrito persistente y creación de pedido desde el
-                  mismo flujo.
+                  Descubrí nuestra selección especial, filtrá por categoría y guardá
+                  tus favoritos en el carrito para completar el pedido en el siguiente paso.
                 </p>
               </div>
 
@@ -329,16 +344,14 @@ return (
                 categoriaSeleccionada={categoriaSeleccionada}
                 categorias={categorias}
                 onCategoriaChange={setCategoriaSeleccionada}
-                onSoloDestacadosChange={setSoloDestacados}
                 onTerminoBusquedaChange={setTerminoBusqueda}
-                soloDestacados={soloDestacados}
                 terminoBusqueda={terminoBusqueda}
               />
             </section>
 
-            <div className="mt-8 grid gap-8 xl:grid-cols-[250px_minmax(0,1fr)_420px]">
-              <aside className="hidden xl:block">
-              <div className="liquid-card sticky top-6 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-[#FFBA1F]/40">
+            <div className={`mt-8 grid gap-8 ${usuario?.rol === "admin" ? "xl:grid-cols-[220px_minmax(0,1fr)]" : "grid-cols-1"}`}>
+              {usuario?.rol === "admin" && <aside className="hidden xl:block">
+              <div className="liquid-card sticky top-6 rounded-xl bg-white p-5 shadow-sm ring-1 ring-[#FFBA1F]/40">
                 <div className="relative">
                   <p className="text-sm font-black uppercase tracking-wide text-[#C41D85]">
                     Menú
@@ -359,7 +372,7 @@ return (
                     </a>
                     <a
                       className="rounded-2xl px-4 py-3 transition hover:bg-[#FFBA1F]/20"
-                      href="#checkout"
+                      href="/carrito"
                     >
                       Pedido en curso
                     </a>
@@ -381,26 +394,26 @@ return (
                   </div>
                 </div>
               </div>
-            </aside>
+            </aside>}
               <section id="catalogo">
                 <div className="flex flex-wrap items-end justify-between gap-4">
                   <div>
-                    <p className="text-sm font-bold uppercase tracking-wide text-[#1D883F]">
-                      Catálogo
+                    <p className="text-sm font-bold uppercase tracking-wide text-[#7ee79c]">
+                      Selección ESTELART
                     </p>
-                    <h2 className="mt-1 text-3xl font-black text-[#3B3B3B]">
-                      Productos disponibles
+                    <h2 className="mt-1 text-3xl font-black text-white">
+                      Productos destacados
                     </h2>
                   </div>
 
-                  <div className="rounded-2xl bg-white px-5 py-3 text-right shadow-sm ring-1 ring-[#FFBA1F]/40">
+                  {terminoBusqueda.trim().length > 0 && <div className="rounded-lg bg-white px-5 py-3 text-right shadow-sm ring-1 ring-[#FFBA1F]/40" role="status">
                     <p className="text-xs font-bold uppercase text-[#3B3B3B]/60">
                       Resultados
                     </p>
                     <p className="text-2xl font-black text-[#FF6515]">
                       {productosFiltrados.length}
                     </p>
-                  </div>
+                  </div>}
                 </div>
 
                 {productosFiltrados.length === 0 ? (
@@ -408,7 +421,7 @@ return (
                     No hay productos para los filtros seleccionados.
                   </p>
                 ) : (
-                  <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                  <div className="featured-universe mt-6 grid gap-7 p-5 sm:p-7 md:grid-cols-2 xl:grid-cols-3">
                     {productosFiltrados.map((producto) => (
                       <ProductCard
                         key={producto.id}
@@ -420,49 +433,16 @@ return (
                 )}
               </section>
 
-              <aside className="lg:sticky lg:top-6 lg:self-start">
-                <div className="rounded-3xl bg-white p-4 shadow-sm ring-1 ring-[#FFBA1F]/40">
-                  <div className="mb-4 rounded-2xl bg-[#FFEEDC] p-4">
-                    <p className="text-sm font-bold uppercase tracking-wide text-[#C41D85]">
-                      Pedido en curso
-                    </p>
-                    <h2 className="mt-1 text-2xl font-black text-[#3B3B3B]">
-                      Carrito y datos del cliente
-                    </h2>
-                    <p className="mt-2 text-sm text-[#3B3B3B]/70">
-                      El pedido se arma desde el catálogo y se envía al backend para
-                      gestión operativa.
-                    </p>
-                  </div>
-
-                  <CartSummary
-                    items={carritoItems}
-                    onDisminuirProducto={disminuirProductoCarrito}
-                    onIncrementarProducto={incrementarProductoCarrito}
-                    onQuitarProducto={quitarProductoCarrito}
-                  />
-
-                  <div id="checkout">
-                    <CheckoutPedido
-                      enviandoPedido={enviandoPedido}
-                      errorPedido={errorPedido}
-                      items={carritoItems}
-                      onEnviarPedido={enviarPedido}
-                      pedidoCreado={pedidoCreado}
-                    />
-                  </div>
-                </div>
-              </aside>
             </div>
 
       {promocionesVigentes.length > 0 && (
         <section className="mt-10" id="promociones">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="text-sm font-bold uppercase tracking-wide text-[#C41D85]">
+              <p className="text-sm font-bold uppercase tracking-wide text-[#ff77c7]">
                 Campañas comerciales
               </p>
-              <h2 className="mt-1 text-3xl font-black text-[#3B3B3B]">
+              <h2 className="mt-1 text-3xl font-black text-white">
                 Promociones activas
               </h2>
             </div>
@@ -496,7 +476,7 @@ return (
         </section>
       )}
         <section
-          className="liquid-card mt-10 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-[#FFBA1F]/40"
+          className="liquid-card mt-10 rounded-xl bg-white p-6 shadow-sm ring-1 ring-[#FFBA1F]/40"
           id="acceso"
         >
           <div className="relative grid gap-6 md:grid-cols-[1fr_1fr]">
@@ -523,6 +503,62 @@ return (
   </>
 )}
       </section>
+      <footer className="mt-14 border-t border-black/10 bg-[#20201f] text-white">
+        <div className="mx-auto grid max-w-[1600px] gap-10 px-6 py-12 md:grid-cols-[1.3fr_0.7fr_0.7fr]">
+          <div>
+            <img alt="" className="h-12 w-auto brightness-0 invert" src="/brand/estelart-logo.svg" />
+            <p className="mt-5 max-w-sm text-sm leading-6 text-white/60">
+              Todo para tu fiesta y tus proyectos creativos, con atención cercana y compras simples.
+            </p>
+            <div className="mt-6 flex gap-3" aria-label="Redes sociales">
+              {[
+                ["Instagram", "https://instagram.com"],
+                ["Facebook", "https://facebook.com"],
+                ["TikTok", "https://tiktok.com"],
+              ].map(([nombre, url]) => (
+                <a
+                  aria-label={`Visitar ${nombre}`}
+                  className="grid h-11 w-11 place-items-center rounded-full border border-white/20 text-sm font-black transition hover:border-[#ffba1f] hover:bg-[#ffba1f] hover:text-[#20201f]"
+                  href={url}
+                  key={nombre}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  {nombre.slice(0, 2)}
+                </a>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/45">Tienda</p>
+            <div className="mt-5 grid gap-3 text-sm text-white/75">
+              <a className="hover:text-white" href="#catalogo">Productos</a>
+              <a className="hover:text-white" href="#promociones">Promociones</a>
+              <a className="hover:text-white" href="#checkout">Mi carrito</a>
+            </div>
+          </div>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/45">Ayuda</p>
+            <div className="mt-5 grid gap-3 text-sm text-white/75">
+              <a className="hover:text-white" href="#acceso">Cuenta mayorista</a>
+              <a className="hover:text-white" href="mailto:ventas@estelart.com">Contacto</a>
+              <span>Atención Lun–Sáb</span>
+            </div>
+          </div>
+        </div>
+        <div className="border-t border-white/10 px-6 py-5 text-center text-xs text-white/40">
+          © {new Date().getFullYear()} ESTELART. Todos los derechos reservados.
+        </div>
+      </footer>
+      <a
+        aria-label="Contactar por WhatsApp"
+        className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full bg-[#25d366] px-5 py-3 text-sm font-black text-white shadow-xl transition hover:-translate-y-0.5 hover:bg-[#1fbd5a]"
+        href="https://wa.me/"
+        rel="noreferrer"
+        target="_blank"
+      >
+        <span aria-hidden="true">●</span> WhatsApp
+      </a>
     </main>
   );
 }
