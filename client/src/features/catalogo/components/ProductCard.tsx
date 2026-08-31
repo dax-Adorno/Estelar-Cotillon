@@ -80,7 +80,7 @@ export function ProductCard({
   const imagenSeleccionada = imagenesGaleria[indiceImagenSeleccionada] ?? null;
 
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-[#FFBA1F]/40 transition hover:-translate-y-1 hover:shadow-lg">
+    <article className="featured-product group flex h-full flex-col overflow-hidden rounded-[10px] border border-white/50 bg-white transition duration-300 hover:-translate-y-2">
       <div className="relative">
         <ProductImageZoom
           alt={imagenSeleccionada?.alt ?? producto.nombre}
@@ -89,7 +89,7 @@ export function ProductCard({
         />
 
         {producto.destacado && (
-          <span className="absolute left-4 top-4 rounded-full bg-[#C41D85] px-3 py-1 text-xs font-black uppercase tracking-wide text-white shadow-sm">
+          <span className="absolute left-4 top-4 rounded-full bg-[#20201f] px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-white shadow-sm">
             Destacado
           </span>
         )}
@@ -133,11 +133,11 @@ export function ProductCard({
       <div className="flex flex-1 flex-col p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-sm font-black uppercase tracking-wide text-[#C41D85]">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#c41d85]">
               {producto.categoria_nombre}
             </p>
 
-            <h3 className="mt-2 text-xl font-black leading-tight text-[#3B3B3B]">
+            <h3 className="mt-2 text-xl font-extrabold leading-tight text-[#20201f]">
               {producto.nombre}
             </h3>
           </div>
@@ -152,13 +152,13 @@ export function ProductCard({
             "Producto disponible para catálogo comercial."}
         </p>
 
-        <div className="mt-6 grid gap-3 rounded-2xl bg-[#FFEEDC] p-4">
+        <div className="mt-6 grid gap-3 rounded-2xl bg-[#f5f2ed] p-4">
           <div className="flex items-end justify-between gap-3">
             <div>
               <p className="text-xs font-black uppercase tracking-wide text-[#3B3B3B]/55">
                 Minorista
               </p>
-              <p className="text-2xl font-black text-[#FF6515]">
+              <p className="text-2xl font-black text-[#20201f]">
                 {formatearPrecio(producto.precio_minorista)}
               </p>
             </div>
@@ -178,7 +178,7 @@ export function ProductCard({
         </div>
 
         <button
-          className="mt-5 w-full rounded-2xl bg-[#FF6515] px-4 py-3 font-black text-white shadow-sm transition hover:bg-[#C41D85] focus:outline-none focus:ring-4 focus:ring-[#FFBA1F]/50"
+          className="mt-5 w-full rounded-full bg-[#20201f] px-4 py-3 font-bold text-white transition hover:bg-[#c41d85] focus:outline-none focus:ring-4 focus:ring-[#c41d85]/15"
           onClick={() => onAgregarProducto(producto)}
           type="button"
         >

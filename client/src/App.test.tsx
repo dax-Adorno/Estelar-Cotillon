@@ -127,13 +127,7 @@ describe("App", () => {
       }),
     ).toBeInTheDocument();
 
-    expect(screen.getByText("Plataforma comercial")).toBeInTheDocument();
-
-    expect(
-      screen.getByRole("heading", {
-        name: /catálogo inteligente para cotillón/i,
-      }),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/celebrá · creá · sorprendé/i)).toBeInTheDocument();
 
     expect(
       await screen.findByText("Limpiapipas surtidos 30 cm"),
@@ -162,20 +156,10 @@ describe("App", () => {
     expect(screen.queryByText("Limpiapipas metalizados")).not.toBeInTheDocument();
   });
 
-  it("deberia filtrar solamente productos destacados", async () => {
+  it("deberia mostrar solamente productos destacados", async () => {
     render(<App />);
 
-    expect(
-      await screen.findByText("Limpiapipas metalizados"),
-    ).toBeInTheDocument();
-
-    fireEvent.click(
-      screen.getByRole("checkbox", {
-        name: /solo destacados/i,
-      }),
-    );
-
-    expect(screen.getByText("Limpiapipas surtidos 30 cm")).toBeInTheDocument();
+    expect(await screen.findByText("Limpiapipas surtidos 30 cm")).toBeInTheDocument();
     expect(screen.getByText("Kit slime colores pastel")).toBeInTheDocument();
 
     expect(screen.queryByText("Limpiapipas metalizados")).not.toBeInTheDocument();
@@ -188,16 +172,25 @@ describe("App", () => {
       await screen.findByText("Limpiapipas surtidos 30 cm"),
     ).toBeInTheDocument();
 
+    expect(screen.queryByText("Resultados")).not.toBeInTheDocument();
+
     fireEvent.change(screen.getByLabelText("Buscar producto"), {
       target: { value: "SLI-001" },
     });
 
     expect(screen.getByText("Kit slime colores pastel")).toBeInTheDocument();
+    expect(screen.getByText("Resultados")).toBeInTheDocument();
 
     expect(
       screen.queryByText("Limpiapipas surtidos 30 cm"),
     ).not.toBeInTheDocument();
 
     expect(screen.queryByText("Limpiapipas metalizados")).not.toBeInTheDocument();
+  });
+
+  it("no deberia mostrar el menu administrativo a clientes publicos", async () => {
+    render(<App />);
+    expect(await screen.findByText("Kit slime colores pastel")).toBeInTheDocument();
+    expect(screen.queryByText("Acceso privado")).not.toBeInTheDocument();
   });
 });
